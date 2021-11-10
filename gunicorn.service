@@ -1,0 +1,39 @@
+[Unit]
+Description=gunicorn daemon
+Requires=socket
+After=network.target
+
+[Service]
+PIDFile=/run/gunicorn/pid
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/NIRO
+ExecStart=/usr/bin/gunicorn3 --workers 4  --bind unix:svsitenote_python_v1.sock -m 007 nir_rest:app
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target 
+
+server {
+listen 80;
+server_name sasiconsultancy.in;
+root /var/www/sasiconsultancy.in;
+index index.html index.htm;
+
+location / {
+try_files $uri /index.html;
+# proxy_pass http://unix:/home/ubuntu/svsitenote_python_v1/svsitenote_python_v1.soc$
+# try_files $uri $uri/ ;
+}
+
+location /api {
+root /fastapi;
+proxy_pass http://unix:/home/ubuntu/svsitenote_python_v1/svsitenote_python_v1.sock;
+
+
+}
+
+
+}
