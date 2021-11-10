@@ -46,8 +46,10 @@ class Auth:
                     'email':'admin@elico.co',
                     'role':'Admin',
                     'token':'admin1234',
-                     'referrences':reference,
-                    'moduleAccess':[{
+                    'resolution':[2.34,3.51,4.68,5.85,7.03,8.20,9.37,10.54],
+
+                    'referrences':reference,
+                     'moduleAccess':[{
                         'featureName':'Tasks',
                         'value':1,
                         'type':'screen',

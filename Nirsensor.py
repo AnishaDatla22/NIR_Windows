@@ -79,14 +79,14 @@ def scansam(name,parent,child,res):
         print('exists')
     else:
         os.makedirs(pathsam+date)
-    df.to_csv("sample/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now())+'_'+str(res)+".csv")
+    df.to_csv("sample/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv")
 
     if os.path.isdir(patho+date):
         print('exists')
     else:
         os.makedirs(patho+date)
 
-    fileNameo="overlay/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now())+'_'+str(res)+".csv"
+    fileNameo="overlay/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
     df.to_csv(fileNameo,index=False)
 
     df1=df.T.reset_index()
@@ -109,7 +109,7 @@ def scanoverlay(name,parent,child,res):
 
 
     # Convert the results into a dataframe
-    df1=pd.read_csv('Referrence/'+parent+'/'+child+'/ref'+str(res)+'.csv')
+    df1=pd.read_csv('referrence/ref'+str(res)+'.csv')
 
 
     values = {"Wavelength (nm)":results["wavelength"],"intensity":results["intensity"],"reference":ref_scan["intensity"]}
@@ -126,7 +126,7 @@ def scanoverlay(name,parent,child,res):
     else:
         os.mkdir(pathsam+date)
 
-    fileName="overlay/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now())+'_'+str(res)+".csv"
+    fileName="overlay/"+parent+"/"+child+"/"+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
     df.to_csv(fileName,index=False)
 
 
@@ -149,7 +149,7 @@ def scanoverlaymultiAutomatic(fileName,name,parent,child,res,stime,number):
     pathsam='overlay/'+parent+'/'+child+'/'
 
     for i in range(1,number+1):
-        df1=pd.read_csv('Referrence/'+parent+'/'+child+'/ref'+str(res)+'.csv')
+        df1=pd.read_csv('referrence/ref'+str(res)+'.csv')
 
         time.sleep(5)
 
@@ -204,7 +204,7 @@ def scanoverlaymulti(fileName,name,parent,child,res):
 
 
     # Convert the results into a dataframe
-    df1=pd.read_csv('Referrence/'+parent+'/'+child+'/ref'+str(res)+'.csv')
+    df1=pd.read_csv('referrence/ref'+str(res)+'.csv')
 
 
     values = {"Wavelength (nm)":results["wavelength"],"intensity":results["intensity"],"reference":ref_scan["intensity"]}
