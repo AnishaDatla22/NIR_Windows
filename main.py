@@ -12,7 +12,7 @@ from Nirsensor import *
 from NIR_Software.authentication.auth import Auth
 from NIR_Software.sensor.scan import Scan
 from Analysis import *
-
+from Models import *
 
 
 app = FastAPI(
@@ -191,25 +191,24 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 
 def custom_config(parent: str, child: str, name: str,start: float,end: float, repeat: float, res: float,pattern: float,setting : str):
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
-
+    filename = ""
     if setting == 'Default':
         set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
-        res=scansam(name,parent,child,res)
+        res=scansample(filename,name,parent,child,res,0)
         return res
     else:
         set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
-        res=scansam(name,parent,child,res)
+        res=scansample(filename,name,parent,child,res,0)
         input_data=res['graph']
         predict_pls(name,parent, child, setting, json.loads(input_data))
         return res
 
 @app.get("/scanCustomSpectralData",tags=['Sensor Controller'])
-
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float,setting: str):
     if setting == 'Default':
         #950 1650 2.34 390,3.5,4.68,5.85,7.03,8.2,9.37,10.54
         set_scan_config(name,start,end,repeat,res,pattern)
-        res=scan(res)
+        res=scanRef(res)
         return res
 
 @app.get("/scanReferrenceData",tags=['Sensor Controller'])
@@ -217,11 +216,11 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
 def custom_config(name:str,start: float,end: float, repeat: float):
 
     #950 1650 2.34 390,3.5,4.68,5.85,7.03,8.2,9.37,10.54
-    nmwidth={0:[2.34,447],1:[3.51,410],2:[4.68,378],3:[5.85,351],4:[7.03,351],5:[8.20,328],6:[9.37,307],7:[10.54,289]}
-    #nmwidth={0:[7.03,351],1:[8.20,328]}
+    #nmwidth={0:[2.34,447],1:[3.51,410],2:[4.68,378],3:[5.85,351],4:[7.03,351],5:[8.20,328],6:[9.37,307],7:[10.54,289]}
+    nmwidth={0:[7.03,351]}
     for i in list(nmwidth.keys()):
         set_scan_config(name,start,end,repeat,nmwidth[i][0],nmwidth[i][1])
-        res=scan(nmwidth[i][0])
+        res=scanRef(nmwidth[i][0])
     res=mergeALlRef()
     return res
 
@@ -231,7 +230,7 @@ def custom_config(name:str,start: float,end: float, repeat: float):
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
 
     set_scan_config(name,start,end,repeat,res,pattern)
-    res=scanoverlay(name,parent,child,res)
+    res=scansample(" ",name,parent,child,res,1)
     return res
 
 @app.get("/scanCustomOverlayMultiSpectralData",tags=['Sensor Controller'])
@@ -240,7 +239,7 @@ def custom_config(fileName: str, parent: str, child: str,name: str,start: float,
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
 
     set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
-    res=scanoverlaymulti(fileName,name,parent,child,res)
+    res=scansample(fileName,name,parent,child,res,2)
     return res
 
 @app.get("/scanCustomOverlayAutoMultiSpectralData",tags=['Sensor Controller'])
@@ -251,22 +250,9 @@ def custom_config(stime:str,number: str ,fileName: str, parent: str, child: str,
     res=scanoverlaymultiAutomatic(fileName,name,parent,child,res,int(stime),int(number))
     return res
 
-"""@app.get("/scanSpectralData",tags=['Sensor Controller'])
-def sensor_activate():
-    output_dict = activate_sensor(0)
-    return output_dict
-
-@app.get("/scanRefSpectralData",tags=['Sensor Controller'])
-def sensor_activate():
-    setup(VID,PID)
-    time.sleep(1)
-    output_data = activate_sensor(1)
-    return output_data"""
-
 @app.get("/sensorTest",tags=['Sensor Controller'])
 def sensor_activate_test():
     global sensorOpen
-
     if sensorOpen == 0:
         setup(VID,PID)
         time.sleep(1)
@@ -274,57 +260,16 @@ def sensor_activate_test():
         sensorOpen = 1
     return {"test":'ok'}
 
-
 @app.get("/allModels",tags=['Model Get Controller'])
 def all_models(parentName:str, childName:str):
-
-    parentMLFolders=os.listdir('Models')
-    Mlmodels=[]
-    childML=[]
-    files=[]
-    print(parentName,childName)
-    for i in parentMLFolders:
-        for j in os.listdir('Models/'+parentName):
-            files=[]
-            for k in os.listdir('Models/'+parentName+'/'+childName):
-                 if '.pkl' in k:
-                     files.append(k[:-4])
-            childML.append({
-                        'childFolder':j,
-                        'Files':files
-                        })
-
-        Mlmodels.append({
-            'parent':i,
-            'child': childML
-
-            })
-        childML=[]
+    type = 0 # for data 1: for graphs
+    files = models(parentName,childName,type)
     return {'Mlmodels':files}
 
 @app.get("/allMetricFiles",tags=['Model Get Controller'])
 def all_models_metrics(parentName:str, childName:str):
-    parentMLFolders=os.listdir('Models')
-    Mlmodels=[]
-    childML=[]
-    print(parentName,childName)
-    for i in parentMLFolders:
-        for j in os.listdir('Models/'+parentName):
-            files=[]
-            for k in os.listdir('Models/'+parentName+'/'+childName+'/graphs'):
-                 if '.json' in k:
-                     files.append(k[:-5])
-            childML.append({
-                        'childFolder':j,
-                        'Files':files
-                        })
-
-        Mlmodels.append({
-            'parent':i,
-            'child': childML
-
-            })
-        childML=[]
+    type = 1 # 0:for data 1: for graphs
+    files = models(parentName,childName,type)
     return {'Mlmodels':files}
 
 @app.get("/metrics",tags=['Model Get Controller'])
