@@ -10,12 +10,5 @@
 
 // Includes
 #include "dlpspec.h"
-#include <stdio.h>
+
 // Functions
-
-int main(void){
-
-    printf("DLP Nano Spectrum Library");
-    return 0;
-}
-

@@ -281,7 +281,6 @@ uint32_t dlpspec_scan_get_exp_time_us(EXP_TIME time_enum);
 DLPSPEC_ERR_CODE dlpspec_scan_section_get_adc_data_range(const slewScanData 
 		*pData, int section_index,int *p_section_start_index, uint16_t *p_num_patterns,
 		uint16_t *p_num_black_patterns);
-DLPSPEC_ERR_CODE format_scan_interpret(void *pBuf,scanResults *pResults);
 
 #ifdef __cplusplus      /* matches __cplusplus construct above */
 }

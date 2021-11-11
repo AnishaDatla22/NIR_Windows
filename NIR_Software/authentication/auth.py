@@ -15,20 +15,20 @@ class Auth:
         # create the folder models
         if not os.path.exists("Models"):
             os.makedirs("Models")
-        if not os.path.exists("Referrence"):
-            os.makedirs("Referrence")
+        if not os.path.exists("referrence"):
+            os.makedirs("referrence")
         # Available reference files
-        parentFolders= [ name for name in os.listdir('Referrence') if os.path.isdir(os.path.join('Referrence', name)) ]
+        parentFolders= [ name for name in os.listdir('referrence') if os.path.isdir(os.path.join('referrence', name)) ]
 
         #parentFolders=os.listdir('Referrence')
         reference=[]
         child=[]
 
         for i in parentFolders:
-            for j in os.listdir('Referrence/'+i):
+            for j in os.listdir('referrence/'+i):
                 child.append({
                     'childFolder':j,
-                    'Files':os.listdir('Referrence/'+i+'/'+j)
+                    'Files':os.listdir('referrence/'+i+'/'+j)
                     })
 
             reference.append({
@@ -49,6 +49,7 @@ class Auth:
                     'resolution':[2.34,3.51,4.68,5.85,7.03,8.20,9.37,10.54],
 
                     'referrences':reference,
+
                      'moduleAccess':[{
                         'featureName':'Tasks',
                         'value':1,

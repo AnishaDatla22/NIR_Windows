@@ -306,27 +306,32 @@ def get_ref_data():
     return ref_results
 
 
-#Set custom Scan Config
+
 def set_scan_config(scan_name,start,end,repeats,res,patterns):
+        #patterns = (end - start)/res
+        serial_scan_config = set_config(scan_name, int(start), int(end), int(repeats), int(patterns), int(res))
+        buf_len = len(serial_scan_config)
+        data = []
 
-    #patterns = (end - start)/res
-    serial_scan_config = set_config(scan_name, int(start), int(end), int(repeats), int(patterns), int(res))
-    buf_len = len(serial_scan_config)
-    data = []
-    data = CMD_CFG_APPY[1:8]
-    data[3] = buf_len + 2
+        print(serial_scan_config)
+        print("\n")
+        print(len(serial_scan_config))
 
-    data.extend(serial_scan_config)
+        data = CMD_CFG_APPY[1:8]
+        data[1] = 0x00
+        data[2] = 0x01
+        data[3] = 0x3C
 
-    data1 = data[0:64]
-    data1[1] = 0x00
-    data1[3] = 0x3B
+        data.extend(serial_scan_config[0:58])
 
-    data2 = CMD_CFG_APPY[1:8]
-    data2[2] = 0x01
-    data2.extend(data[64:])
-    data2[3] = len(data2)
+        data1 = CMD_CFG_APPY[1:8]
+        data1[2] = 0x02
+        data1[3] = len(serial_scan_config[58:]) + 2
+        data1.extend(serial_scan_config[58:])
+
+        print(data)
+        print(data1)
 
 
-    send_info(CMD_CFG_APPY[0], data1, 0)
-    send_info(CMD_CFG_APPY[0], data2, CMD_CFG_APPY[8])
+        send_info(CMD_CFG_APPY[0], data, 0)
+        send_info(CMD_CFG_APPY[0], data1, CMD_CFG_APPY[8])
