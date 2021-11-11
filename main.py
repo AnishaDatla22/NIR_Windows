@@ -161,12 +161,13 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 def custom_config(parent: str, child: str, name: str,start: float,end: float, repeat: float, res: float,pattern: float,setting : str):
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
     filename = ""
+    key = "{:.2f}".format(res)
     if setting == 'Default':
-        set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
+        set_scan_config(name,start,end,repeat,res,nmwidth[key])
         res=scansample(filename,name,parent,child,res,0)
         return res
     else:
-        set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
+        set_scan_config(name,start,end,repeat,res,nmwidth[key])
         res=scansample(filename,name,parent,child,res,0)
         input_data=res['graph']
         predict_pls(name,parent, child, setting, json.loads(input_data))
@@ -203,8 +204,8 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
 @app.get("/scanCustomOverlayMultiSpectralData",tags=['Sensor Controller'])
 def custom_config(fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
-
-    set_scan_config(name,start,end,repeat,res,nmwidth[str(res)])
+    key = "{:.2f}".format(res)
+    set_scan_config(name,start,end,repeat,res,nmwidth[key])
     res=scansample(fileName,name,parent,child,res,2)
     return res
 
