@@ -9,7 +9,6 @@ Created on Mon Jun 22 13:02:52 2020
 from Setup import *
 
 
-
 def predict_pls(name,parent,child,saved_model, input_data):
 
     df=pd.DataFrame(input_data)
@@ -28,8 +27,8 @@ def predict_pls(name,parent,child,saved_model, input_data):
 
     with open('Models/'+parent+'/'+child+'/PreTreatment/'+saved_model.rsplit('_', 1)[0]+'_svgolay.pkl', 'rb') as file:
         sg_param=pickle.load(file)
-    Xsv = signal.savgol_filter(Xscatter, sg_param[0], polyorder = sg_param[1],deriv=sg_param[2])
-
+    #Xsv = signal.savgol_filter(Xscatter, sg_param[0], polyorder = sg_param[1],deriv=sg_param[2])
+    Xsv = signal.savgol_filter(Xscatter, 17, polyorder = 2,deriv=2)
 
     with open('Models/'+parent+'/'+child+'/'+saved_model+'.pkl', 'rb') as file:
         pls=pickle.load(file)
@@ -156,7 +155,29 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,ploynomial,deriva
 
     mse_cv = mean_squared_error(y, y_cv)
     mse_c_test = mean_squared_error(actual, pred)
-    return df_train_pred,scores_df,loadings_df,mse_df,score_c,score_cv,mse_c,mse_cv,score_c_test,mse_c_test,df_pred
+
+    final_mse=mse_df.to_json(orient='records')
+    final_pred=df_pred.to_json(orient='records')
+    final_loadings=loadings_df.to_json(orient='records')
+    final_scores=scores_df.to_json(orient='records')
+    final_train=df_train_pred.to_json(orient='records')
+    final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
+                  'prediction':final_pred,'mse':final_mse,'R2_calib':round(score_c, 2),
+                  'R2_cv':round(score_cv, 2),'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
+                  'R2_calib_pred':round(score_c_test, 2),'MSE_calib_pred':round(mse_c_test, 2)}
+
+    file_path = "Models/"+parent+"/"+child+"/graphs/"
+    file_name = file_path+sample_name + "_plsmodel.json"
+    json_object = json.dumps(final_data, indent = 4)
+
+
+    if not os.path.exists(file_path):
+         os.makedirs(file_path)
+    with open(file_name,'w') as f:
+        f.write(json_object)
+
+
+    return final_data
 
 
 
@@ -174,17 +195,19 @@ def predict_flow(df,parent,child,saved_model):
             SC=pickle.load(file)                   # SNV or MSC
         Xscatter=SC.fit_transform(df)
         #Xscatter = Xscatter.loc[:, ~Xscatter.columns.str.contains('^Unnamed')]
-    Xscatter= Xscatter.T
+    #Xscatter= Xscatter.T
 
    # Pretreatment
     file_name_pt = file_path + '/PreTreatment/'+saved_model.rsplit('_', 1)[0]+'_svgolay.pkl'
 
     if not os.path.exists(file_name_pt):
-        Xsv = df
+        Xsv = df.T
     else:
         with open(file_name_pt, 'rb') as file:
             sg_param=pickle.load(file)
-        Xsv = signal.savgol_filter(df,sg_param[0],polyorder = sg_param[1],deriv=sg_param[2])
+        #Xsv = signal.savgol_filter(df,sg_param[0],polyorder = sg_param[1],deriv=sg_param[2])
+        #Xsv = signal.savgol_filter(df,17,polyorder = 2,deriv=2)
+        Xsv = Xscatter
     # Regression
     with open(file_path +'/'+saved_model+'.pkl', 'rb') as file:
         pls=pickle.load(file)
@@ -195,7 +218,7 @@ def predict_flow(df,parent,child,saved_model):
 def upload_predict(df,parent,child,saved_model):
        df1 = df
        samples=df1.index.values.tolist()
-       #df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')]
+       df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')]
 
        df1=df1.T
        df1.index.names = ['Wavelength']

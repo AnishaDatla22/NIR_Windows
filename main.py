@@ -45,14 +45,6 @@ JSONObject = Dict[AnyStr, Any]
 JSONArray = List[Any]
 JSONStructure = Union[JSONArray, JSONObject]
 
-def predict_pls(name,parent,child,saved_model, input_data):
-    df=pd.DataFrame(input_data)
-    df=df.set_index('Wavelength (nm)')
-
-
-    yhat = predict_flow(df,parent,child,saved_model)
-    return {'Moisture_predict':yhat[0][0],'Protein_predict':yhat[0][1]}
-
 
 
 @app.post("/SNV",tags=['Transform Algorithms'])
@@ -69,31 +61,9 @@ def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure
 
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
-def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,
-                  ploynomial: int,derivative: int, inputf: JSONStructure = None):
+def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int, ploynomial: int,derivative: int, inputf: JSONStructure = None):
 
-
-   df_train_pred,scores_df,loadings_df,mse_df,score_c,score_cv,\
-   mse_c,mse_cv,score_c_test,mse_c_test,df_pred = pls_func(parentName,childName,sample,scatterCorrection,window,ploynomial,derivative,inputf)
-
-   final_mse=mse_df.to_json(orient='records')
-   final_pred=df_pred.to_json(orient='records')
-   final_loadings=loadings_df.to_json(orient='records')
-   final_scores=scores_df.to_json(orient='records')
-   final_train=df_train_pred.to_json(orient='records')
-
-
-   final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
-                 'prediction':final_pred,'mse':final_mse,'R2_calib':round(score_c, 2),
-                 'R2_cv':round(score_cv, 2),'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
-                 'R2_calib_pred':round(score_c_test, 2),'MSE_calib_pred':round(mse_c_test, 2)}
-   file_name = "Models"+"/"+parentName+"/"+childName+"/"+"graphs/"+sample + "_plsmodel.json"
-   json_object = json.dumps(final_data, indent = 4)
-   if not os.path.exists("Models/"+"/"+parentName+"/"+childName+"/graphs/"):
-        os.makedirs("Models/"+"/"+parentName+"/"+childName+"/graphs/")
-   with open(file_name,'w') as f:
-       f.write(json_object)
-
+   final_data = pls_func(parentName,childName,sample,scatterCorrection,window,ploynomial,derivative,inputf)
 
    return final_data
 
@@ -188,7 +158,6 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 
 
 @app.get("/scanSpectralData1",tags=['Sensor Controller'])
-
 def custom_config(parent: str, child: str, name: str,start: float,end: float, repeat: float, res: float,pattern: float,setting : str):
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
     filename = ""
@@ -212,12 +181,11 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
         return res
 
 @app.get("/scanReferrenceData",tags=['Sensor Controller'])
-
 def custom_config(name:str,start: float,end: float, repeat: float):
 
     #950 1650 2.34 390,3.5,4.68,5.85,7.03,8.2,9.37,10.54
-    #nmwidth={0:[2.34,447],1:[3.51,410],2:[4.68,378],3:[5.85,351],4:[7.03,351],5:[8.20,328],6:[9.37,307],7:[10.54,289]}
-    nmwidth={0:[7.03,351]}
+    nmwidth={0:[2.34,447],1:[3.51,410],2:[4.68,378],3:[5.85,351],4:[7.03,351],5:[8.20,328],6:[9.37,307],7:[10.54,289]}
+    #nmwidth={0:[7.03,351]}
     for i in list(nmwidth.keys()):
         set_scan_config(name,start,end,repeat,nmwidth[i][0],nmwidth[i][1])
         res=scanRef(nmwidth[i][0])
@@ -226,7 +194,6 @@ def custom_config(name:str,start: float,end: float, repeat: float):
 
 
 @app.get("/scanCustomOverlaySpectralData",tags=['Sensor Controller'])
-
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
 
     set_scan_config(name,start,end,repeat,res,pattern)
@@ -234,7 +201,6 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
     return res
 
 @app.get("/scanCustomOverlayMultiSpectralData",tags=['Sensor Controller'])
-
 def custom_config(fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
     nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
 
@@ -243,7 +209,6 @@ def custom_config(fileName: str, parent: str, child: str,name: str,start: float,
     return res
 
 @app.get("/scanCustomOverlayAutoMultiSpectralData",tags=['Sensor Controller'])
-
 def custom_config(stime:str,number: str ,fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float,pattern: float):
 
     set_scan_config(name,start,end,repeat,res, pattern)
@@ -262,13 +227,13 @@ def sensor_activate_test():
 
 @app.get("/allModels",tags=['Model Get Controller'])
 def all_models(parentName:str, childName:str):
-    type = 0 # for data 1: for graphs
+    type = 1 # for data 1: for graphs
     files = models(parentName,childName,type)
     return {'Mlmodels':files}
 
 @app.get("/allMetricFiles",tags=['Model Get Controller'])
 def all_models_metrics(parentName:str, childName:str):
-    type = 1 # 0:for data 1: for graphs
+    type = 0 # 0:for data 1: for graphs
     files = models(parentName,childName,type)
     return {'Mlmodels':files}
 
