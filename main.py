@@ -159,25 +159,28 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 
 @app.get("/scanSpectralData1",tags=['Sensor Controller'])
 def custom_config(parent: str, child: str, name: str,start: float,end: float, repeat: float, res: float,pattern: float,setting : str):
-    nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
+    #nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
     filename = ""
-    key = "{:.2f}".format(res)
-    if setting == 'Default':
-        set_scan_config(name,start,end,repeat,res,nmwidth[key])
-        res=scansample(filename,name,parent,child,res,0)
-        return res
-    else:
-        set_scan_config(name,start,end,repeat,res,nmwidth[key])
-        res=scansample(filename,name,parent,child,res,0)
+    #key = "{:.2f}".format(res)
+
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)
+    #set_scan_config(name,start,end,repeat,res,nmwidth[key])
+    res=scansample(filename,name,parent,child,res,0)
+    if setting != 'Default':
         input_data=res['graph']
         predict_pls(name,parent, child, setting, json.loads(input_data))
-        return res
+    return res
 
 @app.get("/scanCustomSpectralData",tags=['Sensor Controller'])
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float,setting: str):
     if setting == 'Default':
         #950 1650 2.34 390,3.5,4.68,5.85,7.03,8.2,9.37,10.54
-        set_scan_config(name,start,end,repeat,res,pattern)
+        config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+        config_id = config_table[int(res)]
+        set_active_config(config_id)
+        #set_scan_config(name,start,end,repeat,res,pattern)
         res=scanRef(res)
         return res
 
@@ -185,10 +188,12 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
 def custom_config(name:str,start: float,end: float, repeat: float):
 
     #950 1650 2.34 390,3.5,4.68,5.85,7.03,8.2,9.37,10.54
-    nmwidth={0:[2.34,447],1:[3.51,410],2:[4.68,378],3:[5.85,351],4:[7.03,351],5:[8.20,328],6:[9.37,307],7:[10.54,289]}
-    #nmwidth={0:[7.03,351]}
+    nmwidth={0:[2.34,444],1:[3.51,407],2:[4.68,378],3:[5.85,350],4:[7.03,350],5:[8.20,327],6:[9.37,306],7:[10.54,288]}
+    get_scan_config_id()
+
     for i in list(nmwidth.keys()):
-        set_scan_config(name,start,end,repeat,nmwidth[i][0],nmwidth[i][1])
+        #set_scan_config(name,start,end,repeat,nmwidth[i][0],nmwidth[i][1])
+        set_active_config(i)
         res=scanRef(nmwidth[i][0])
     res=mergeALlRef()
     return res
@@ -197,22 +202,31 @@ def custom_config(name:str,start: float,end: float, repeat: float):
 @app.get("/scanCustomOverlaySpectralData",tags=['Sensor Controller'])
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
 
-    set_scan_config(name,start,end,repeat,res,pattern)
+    #set_scan_config(name,start,end,repeat,res,pattern)
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)
     res=scansample(" ",name,parent,child,res,1)
     return res
 
 @app.get("/scanCustomOverlayMultiSpectralData",tags=['Sensor Controller'])
 def custom_config(fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
-    nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
-    key = "{:.2f}".format(res)
-    set_scan_config(name,start,end,repeat,res,nmwidth[key])
+    #nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
+    #key = "{:.2f}".format(res)
+    #set_scan_config(name,start,end,repeat,res,nmwidth[key])
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)
+
     res=scansample(fileName,name,parent,child,res,2)
     return res
 
 @app.get("/scanCustomOverlayAutoMultiSpectralData",tags=['Sensor Controller'])
 def custom_config(stime:str,number: str ,fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float,pattern: float):
-
-    set_scan_config(name,start,end,repeat,res, pattern)
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)
+    #set_scan_config(name,start,end,repeat,res, pattern)
     res=scanoverlaymultiAutomatic(fileName,name,parent,child,res,int(stime),int(number))
     return res
 

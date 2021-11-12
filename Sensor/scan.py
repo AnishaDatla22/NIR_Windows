@@ -201,7 +201,7 @@ def set_config(scan_name,start,end,repeats,patterns,res):
                 elif fname == "scanConfigIndex":
                     value = 4
                 elif fname == "scanConfig_serial_number":
-                    value = str.encode("6110022")
+                    value = str.encode("6100125")
                 elif fname == "config_name":
                     value = str.encode(scan_name)
                 setattr(config.head,fname,value)

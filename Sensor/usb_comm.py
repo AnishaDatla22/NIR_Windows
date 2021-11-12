@@ -70,12 +70,9 @@ def process_data(data,cmd_name):
         read_data_process(data[1:],cmd_name)
     elif status["R/W"] == 1:                      # read  transaction
         seq_no = data[1]
-        print("Seq_no: " + str(seq_no))
         length = data[2] + (data[3] << 8)
-        print("Packet_Len: " + str(length))
+        print("Seq_no: " + str(seq_no) + " Packet_Len: " + str(length))
         read_data_process(data[4:],cmd_name)
-    else:
-        print("\n")
 
 # cmd specific decode of data
 def read_data_process(rd_data,cmd_name):
@@ -172,8 +169,6 @@ def write_to_file(fname,data):
         f1.write("\n\n")
     f1.close()
 
-
-
 #Get Version Numbers
 def get_ver():
     send_info (CMD_TIV_VERS[0], CMD_TIV_VERS[1:8], CMD_TIV_VERS[8])
@@ -212,7 +207,6 @@ def led_test(start):
 def get_scan_config_id():
     send_info (CMD_NUM_CONF[0], CMD_NUM_CONF[1:8], CMD_NUM_CONF[8]) #Num of scan config
     send_info (CMD_GET_SCON[0], CMD_GET_SCON[1:8], CMD_GET_SCON[8]) #Current active config
-
 
 # Pick Active config
 def set_active_config(index):
@@ -255,12 +249,6 @@ def start_scan(store_in_sd):
     device_busy = 1
 
     send_info (CMD_GET_GAIN[0], CMD_GET_GAIN[1:8], CMD_GET_GAIN[8])
-""" #Scan Interpret
-    while scan_interpret_done != 1:
-        send_info (CMD_INT_STAT[0], CMD_INT_STAT[1:8], CMD_INT_STAT[8])
-        time.sleep(0.5) #check after 500msec
-    scan_interpret_done = 0
-"""
 
 
 #read scan data
@@ -318,20 +306,37 @@ def set_scan_config(scan_name,start,end,repeats,res,patterns):
         print(len(serial_scan_config))
 
         data = CMD_CFG_APPY[1:8]
-        data[1] = 0x00
-        data[2] = 0x01
+        data[2] = 0x00
         data[3] = 0x3C
 
         data.extend(serial_scan_config[0:58])
 
         data1 = CMD_CFG_APPY[1:8]
-        data1[2] = 0x02
+        #data1[2] = 0x01
         data1[3] = len(serial_scan_config[58:]) + 2
         data1.extend(serial_scan_config[58:])
-
         print(data)
         print(data1)
 
 
-        send_info(CMD_CFG_APPY[0], data, 0)
+        send_info(CMD_CFG_APPY[0], data, 4)
+        print("done")
         send_info(CMD_CFG_APPY[0], data1, CMD_CFG_APPY[8])
+        print("done")
+'''
+
+def set_scan_config(scan_name,start,end,repeats,res,patterns):
+        global tisensor
+        #patterns = (end - start)/res
+        serial_scan_config = set_config(scan_name, int(start), int(end), int(repeats), int(patterns), int(res))
+        buf_len = len(serial_scan_config)
+        data = []
+        data = CMD_CFG_APPY[1:8]
+        data[3] = buf_len + 2
+        data.extend(serial_scan_config)
+
+        tisensor
+
+        send_info(CMD_CFG_APPY[0],data[0:64],4)
+        send_info(CMD_CFG_APPY[0],data[64:],CMD_CFG_APPY[8])
+'''
