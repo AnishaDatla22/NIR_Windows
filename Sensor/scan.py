@@ -5,6 +5,9 @@ import ctypes
 import os
 
 
+dlp_nano_lib = ctypes.CDLL("Sensor/src/libdlpspec.dll")
+#dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
+
 class scanConfigHead(ctypes.Structure):
     _fields_ = [
                 ("scan_type", ctypes.c_uint8),
@@ -97,8 +100,6 @@ class scanResults(ctypes.Structure):
                 ("length",           ctypes.c_int)
                ]
 
-dlp_nano_lib = ctypes.CDLL("Sensor/src/libdlpspec.dll")
-#dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
 
 def unpack_ref(input):
     dict = {}
