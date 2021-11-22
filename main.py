@@ -61,9 +61,26 @@ def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure
 
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
-def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int, ploynomial: int,derivative: int, inputf: JSONStructure = None):
+def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int, polynomial: int,derivative: int, inputf: JSONStructure = None):
 
-   final_data = pls_func(parentName,childName,sample,scatterCorrection,window,ploynomial,derivative,inputf)
+   #final_data = pls_func(parentName,childName,sample,scatterCorrection,window,polynomial,derivative,inputf)
+
+   df_train_pred,scores_df,loadings_df,mse_df,score_c,score_cv,\
+   mse_c,mse_cv,score_c_test,mse_c_test,df_pred = \
+   pls_func(parentName,childName,sample,scatterCorrection, \
+   window,ploynomial,derivative,inputf)
+
+   final_mse=mse_df.to_json(orient='records')
+   final_pred=df_pred.to_json(orient='records')
+   final_loadings=loadings_df.to_json(orient='records')
+   final_scores=scores_df.to_json(orient='records')
+   final_train=df_train_pred.to_json(orient='records')
+
+
+   final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
+                 'prediction':final_pred,'mse':final_mse,'R2_calib':round(score_c, 2),
+                 'R2_cv':round(score_cv, 2),'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
+                 'R2_calib_pred':round(score_c_test, 2),'MSE_calib_pred':round(mse_c_test, 2)}
 
    return final_data
 
@@ -96,12 +113,15 @@ def PLS_regression():
 
 @app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
 def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
-       file=file.file.read()
-       df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
-       #df[df.columns[0]]=np.around(df[df.columns[0]])
-       df.set_index('Wavelength (nm)', inplace=True)
-       final_pred=upload_predict(df,parent,child,model)
-       return {'prediction':final_pred}
+    file=file.file.read()
+    try:
+        df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
+    except:
+        df=pd.read_csv(pd.io.common.BytesIO(file))
+    #df[df.columns[0]]=np.around(df[df.columns[0]])
+    df.set_index('Wavelength (nm)', inplace=True)
+    final_pred=upload_predict(df,parent,child,model)
+    return {'prediction':final_pred}
 
 
 @app.post("/uploadFile",tags=['File Upload Controller'])
@@ -109,7 +129,12 @@ def upload_file(file: UploadFile = File(...)):
    global df
    global maincolumns
    file=file.file.read()
-   df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
+
+   try:
+       df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
+   except:
+       df=pd.read_csv(pd.io.common.BytesIO(file))
+
 
    if '% Moisture Content' in df.columns:
 
