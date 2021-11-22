@@ -61,29 +61,15 @@ def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure
 
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
-def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int, polynomial: int,derivative: int, inputf: JSONStructure = None):
+def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,
+                  ploynomial: int,derivative: int, inputf: JSONStructure = None):
 
-   #final_data = pls_func(parentName,childName,sample,scatterCorrection,window,polynomial,derivative,inputf)
 
-   df_train_pred,scores_df,loadings_df,mse_df,score_c,score_cv,\
-   mse_c,mse_cv,score_c_test,mse_c_test,df_pred = \
-   pls_func(parentName,childName,sample,scatterCorrection, \
+   final_data = pls_func(parentName,childName,sample,scatterCorrection, \
    window,ploynomial,derivative,inputf)
 
-   final_mse=mse_df.to_json(orient='records')
-   final_pred=df_pred.to_json(orient='records')
-   final_loadings=loadings_df.to_json(orient='records')
-   final_scores=scores_df.to_json(orient='records')
-   final_train=df_train_pred.to_json(orient='records')
-
-
-   final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
-                 'prediction':final_pred,'mse':final_mse,'R2_calib':round(score_c, 2),
-                 'R2_cv':round(score_cv, 2),'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
-                 'R2_calib_pred':round(score_c_test, 2),'MSE_calib_pred':round(mse_c_test, 2)}
 
    return final_data
-
 
 
 
@@ -105,7 +91,7 @@ def PLS_regression():
     y_pred=pls.predict(x_pls)
     print(y_pred)
     df_final=pd.DataFrame(y_pred)
-    df_final.columns=['% Moisture Content','% Oil Content']
+    df_final.columns=['% Moisture Content','% Fat Content', '% Protein Content']
     df_final=df_final.round(decimals=1)
     final=df_final.to_json(orient='records')
     return {"preditedValues":final}
@@ -140,7 +126,7 @@ def upload_file(file: UploadFile = File(...)):
 
        df.rename(columns = {'Wavelength (nm)' : 'Wavelength'}, inplace = True)
        df1=df
-       df1=df1.drop(['% Moisture Content','% Oil Content'], axis = 1)
+       df1=df1.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis = 1)
        df1=df1.T
        df1.columns=df1.iloc[0]
        df1 = df1.iloc[1:]

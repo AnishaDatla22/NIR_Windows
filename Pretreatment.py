@@ -40,7 +40,7 @@ def scatter_correction(parent,child, sample_name,model,model_name, input_file):
     df_sc = df_sc.loc[:, ~df_sc.columns.str.contains('^Unnamed')]
     df_sc=df_sc.reset_index()
 
-    file_path = "Scatter_Correction/"+model_name+"/"+parent+"/"+child+"/"
+    file_path = "scatter_correction/"+model_name+"/"+parent+"/"+child+"/"
     file_name = file_path + sample_name + "_" +model_name+ ".csv"
 
     final_out,final_out_table = pt_data_formatting(file_path,file_name,df_sc)
@@ -77,7 +77,7 @@ def savitzky_golay_f(parentName,childName,sample,derivative,polynomial,window,in
 
     df_final[col]=smoothed
 
-    file_path = "Pretreatment/SavitzkyGolay/"+parentName+"/"+childName+"/"
+    file_path = "pretreatment/SavitzkyGolay/"+parentName+"/"+childName+"/"
     file_name = file_path + sample + "_SG.csv"
 
     final_out2,final_out_table = pt_data_formatting(file_path,file_name,df_final)
