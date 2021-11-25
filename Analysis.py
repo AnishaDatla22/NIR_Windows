@@ -26,13 +26,12 @@ def predict_pls(name,parent,child,saved_model, input_data):
     with open('Models/'+parent+'/'+child+'/pretreatment/'+saved_model.rsplit('_', 1)[0]+'_svgolay.pkl', 'rb') as file:
         sg_param=pickle.load(file)
     Xsv = signal.savgol_filter(Xscatter, sg_param[0], polyorder = sg_param[1],deriv=sg_param[2])
-    #Xsv = signal.savgol_filter(Xscatter, 17, polyorder = 2,deriv=2)
 
     with open('Models/'+parent+'/'+child+'/'+saved_model+'.pkl', 'rb') as file:
         pls=pickle.load(file)
 
     yhat=pls.predict(Xsv)
-    print(yhat)
+    #print(yhat)
 
     predict_dict = {}
 
@@ -42,6 +41,38 @@ def predict_pls(name,parent,child,saved_model, input_data):
     json_fmt = json.dumps(predict_dict,indent=4)
     return json_fmt
 
+def predict_flow(df,parent,child,saved_model):
+
+    #Scatter Correction
+    file_path = 'Models/'+parent+'/'+child
+    file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]+'_snv.pkl'
+    df = df.dropna()
+
+    if not os.path.exists(file_name_sc):
+        Xscatter = df
+    else:
+        with open(file_name_sc, 'rb') as file:
+            SC=pickle.load(file)                   # SNV or MSC
+        Xscatter=SC.fit_transform(df)
+        #Xscatter = Xscatter.loc[:, ~Xscatter.columns.str.contains('^Unnamed')]
+    Xscatter= Xscatter.T
+
+   # Pretreatment
+    file_name_pt = file_path + '/pretreatment/'+saved_model.rsplit('_', 1)[0]+'_svgolay.pkl'
+
+    if not os.path.exists(file_name_pt):
+        Xsv = df.T
+    else:
+        with open(file_name_pt, 'rb') as file:
+            sg_param=pickle.load(file)
+        Xsv = signal.savgol_filter(df,sg_param[0],polyorder = sg_param[1],deriv=sg_param[2])
+
+    # Regression
+    with open(file_path +'/'+saved_model+'.pkl', 'rb') as file:
+        pls=pickle.load(file)
+    yhat=pls.predict(Xsv)
+
+    return yhat
 
 def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file):
 
@@ -72,17 +103,8 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
         x_scatter=MSC.fit_transform(x1)
 
-    #Xpt = signal.savgol_filter(x_scatter, 5, polyorder = 2,deriv=2)
-    #sav_gol_param = [5,2,2]
-    # hack until backend is fixed
-    window = 5
-    polynomial = 2
-    derivative = 2
 
-    if derivative==1:
-        Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative, delta=x[1] - x[0])
-    else:
-        Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative)
+    Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative)
     sav_gol_param = [window,polynomial,derivative]
 
     dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_svgolay.pkl', 'wb'))
@@ -161,7 +183,6 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
     score_cv = r2_score(y, y_cv)
     score_c_test=r2_score(actual, pred)
 
-    #predict_pls('Testpls','grain','soya_bean','test_plsmodel','sample.json')
 
     # Calculate mean squared error for calibration and cross validation
     mse_c = mean_squared_error(y, y_c)
@@ -192,58 +213,22 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         f.write(json_object)
     return final_data
 
-
-def predict_flow(df,parent,child,saved_model):
-
-    #Scatter Correction
-    file_path = 'Models/'+parent+'/'+child
-    file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]+'_snv.pkl'
-    df = df.dropna()
-
-    if not os.path.exists(file_name_sc):
-        Xscatter = df
-    else:
-        with open(file_name_sc, 'rb') as file:
-            SC=pickle.load(file)                   # SNV or MSC
-        Xscatter=SC.fit_transform(df)
-        #Xscatter = Xscatter.loc[:, ~Xscatter.columns.str.contains('^Unnamed')]
-    Xscatter= Xscatter.T
-
-   # Pretreatment
-    file_name_pt = file_path + '/pretreatment/'+saved_model.rsplit('_', 1)[0]+'_svgolay.pkl'
-
-    if not os.path.exists(file_name_pt):
-        Xsv = df.T
-    else:
-        with open(file_name_pt, 'rb') as file:
-            sg_param=pickle.load(file)
-        Xsv = signal.savgol_filter(df,sg_param[0],polyorder = sg_param[1],deriv=sg_param[2])
-
-    # Regression
-    with open(file_path +'/'+saved_model+'.pkl', 'rb') as file:
-        pls=pickle.load(file)
-    yhat=pls.predict(Xsv)
-
-    return yhat
-
 def upload_predict(df,parent,child,saved_model):
        df1 = df
-       samples=df1.index.values.tolist()
-       #print(df1)
        df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')]
        df1.dropna(inplace=True)
-
+       samples=df1.index.values.tolist()
        df1=df1.T
        df1.index.names = ['Wavelength']
        df1=df1.reset_index()
-       #print(df1)
-       #df1.columns = np.arange(len(df1.columns))
 
        yhat = predict_flow(df,parent,child,saved_model)
+
 
        pred=list(yhat)
        df_pred=pd.DataFrame()
        df_pred['samples']=samples
+
        df_pred['prediction']=pred
        df_pred[['moisture_predict','fat_predict','protein_predict']] = pd.DataFrame(df_pred.prediction.tolist(), index= df_pred.index)
        df_pred=df_pred.round(1)

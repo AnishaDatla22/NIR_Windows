@@ -47,6 +47,10 @@ JSONStructure = Union[JSONArray, JSONObject]
 
 
 
+
+#**********************************************************************************************
+#-------------------------------PreTreatment Functions-----------------------------------------
+#**********************************************************************************************
 @app.post("/SNV",tags=['Transform Algorithms'])
 def tr_algo_sn(parentName:str, childName:str, sample:str, inputf: JSONStructure = None):
         SNV = snv()
@@ -60,19 +64,25 @@ def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure
         return {'msc':final_out,'table':final_out_table}
 
 
+@app.post("/savitzkyGolay",tags=['Spectral Pretreatment Controller'])
+def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,polynomial:int=2,window:int =5,inputf: JSONStructure = None):
+    smoothed_data = savitzky_golay_f(parentName,childName,sample,derivative,polynomial,window,inputf)
+    return smoothed_data
+
+#**********************************************************************************************
+#-------------------------------ML Functions-----------------------------------------
+#**********************************************************************************************
+
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
 def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,
                   ploynomial: int,derivative: int, inputf: JSONStructure = None):
 
-
    final_data = pls_func(parentName,childName,sample,scatterCorrection, \
    window,ploynomial,derivative,inputf)
 
-
    return final_data
 
-
-
+"""
 @app.get("/pls",tags=['Ml Algorithms'])
 def PLS_regression():
 
@@ -95,7 +105,10 @@ def PLS_regression():
     df_final=df_final.round(decimals=1)
     final=df_final.to_json(orient='records')
     return {"preditedValues":final}
-
+"""
+#**********************************************************************************************
+#-------------------------------File Upload Functions-----------------------------------------
+#**********************************************************************************************
 
 @app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
 def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
@@ -104,7 +117,6 @@ def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
         df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
     except:
         df=pd.read_csv(pd.io.common.BytesIO(file))
-    #df[df.columns[0]]=np.around(df[df.columns[0]])
     df.set_index('Wavelength (nm)', inplace=True)
     final_pred=upload_predict(df,parent,child,model)
     return {'prediction':final_pred}
@@ -139,13 +151,14 @@ def upload_file(file: UploadFile = File(...)):
        return {'table':final_out,'graph':final_out1}
 
    else:
+
        df[df.columns[0]]=np.around(df[df.columns[0]])
        df.set_index('Wavelength (nm)', inplace=True)
        df2=df.reset_index()
        df2 = df2.loc[:, ~df2.columns.str.contains('^Unnamed')]
-
        df1 = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-
+       df1.dropna(inplace=True)
+       df2.dropna(inplace=True)
        df1=df1.T
        df1.index.names = ['Wavelength']
        df1=df1.reset_index()
@@ -160,13 +173,9 @@ def upload_file(file: UploadFile = File(...)):
        return {'table':final_out1,'graph':final_out}
 
 
-
-
-@app.post("/savitzkyGolay",tags=['Spectral Pretreatment Controller'])
-def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,polynomial:int=2,window:int =5,inputf: JSONStructure = None):
-    smoothed_data = savitzky_golay_f(parentName,childName,sample,derivative,polynomial,window,inputf)
-    return smoothed_data
-
+#**********************************************************************************************
+#-------------------------------Sensor Functions-----------------------------------------
+#**********************************************************************************************
 
 @app.get("/scanSpectralData1",tags=['Sensor Controller'])
 def custom_config(parent: str, child: str, name: str,start: float,end: float, repeat: float, res: float,pattern: float,setting : str):
@@ -251,6 +260,10 @@ def sensor_activate_test():
         sensorOpen = 1
     return {"test":'ok'}
 
+#**********************************************************************************************
+#-------------------------------Models Functions-----------------------------------------
+#**********************************************************************************************
+
 @app.get("/allModels",tags=['Model Get Controller'])
 def all_models(parentName:str, childName:str):
     type = 1 # for data 1: for graphs
@@ -268,6 +281,10 @@ def all_models_metrics(parentName:str, childName:str,model:str):
     with open('Models/'+parentName+'/'+childName+'/graphs/'+model+'.json') as f:
         data=json.load(f)
     return {'metrics':data}
+
+#**********************************************************************************************
+#-------------------------------Authentication Functions-----------------------------------------
+#**********************************************************************************************
 
 @app.get("/userValidation",tags=['Authentication Controller'])
 def user_validate(userName: str, password: str):

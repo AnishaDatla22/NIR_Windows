@@ -47,7 +47,6 @@ def scatter_correction(parent,child, sample_name,model,model_name, input_file):
 
     return final_out, final_out_table # return json structure
 
-
 def savitzky_golay_f(parentName,childName,sample,derivative,polynomial,window,input_data):
 
    df=pd.DataFrame(input_data)

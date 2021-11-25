@@ -37,7 +37,6 @@ def scanRef(res):
 
     return {"graph":final_out}
 
-
 def scansample(fileName,name,parent,child,res,scan_type):
 
     #Scan_type - 0:Scan 1:ScanOverlay 2:ScanOverlayMulti
