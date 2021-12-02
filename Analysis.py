@@ -101,6 +101,7 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         x_scatter=SNV.fit_transform(x1)
     elif scatterCorrection == 'MSC':
         dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
+
         x_scatter=MSC.fit_transform(x1)
 
 
@@ -215,7 +216,7 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 def upload_predict(df,parent,child,saved_model):
        df1 = df
-       df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')]
+       #df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')]
        df1.dropna(inplace=True)
        samples=df1.index.values.tolist()
        df1=df1.T

@@ -144,8 +144,9 @@ def upload_file(file: UploadFile = File(...)):
        df1 = df1.iloc[1:]
        df1=df1.reset_index()
        df1.rename(columns = {'index' : 'Wavelength (nm)'}, inplace = True)
-
-
+       pd.set_option('display.max_columns', None)
+       print(df1.columns)
+       #print(df1)
        final_out=df.to_json(orient='records')
        final_out1=df1.to_json(orient='records')
        return {'table':final_out,'graph':final_out1}
