@@ -54,19 +54,19 @@ JSONStructure = Union[JSONArray, JSONObject]
 @app.post("/SNV",tags=['Transform Algorithms'])
 def tr_algo_sn(parentName:str, childName:str, sample:str, inputf: JSONStructure = None):
         SNV = snv()
-        final_out,final_out_table = scatter_correction(parentName, childName, sample,SNV,'T_SNV', inputf)
+        final_out,final_out_table = PT_scatter_correction(parentName, childName, sample,SNV,'T_SNV', inputf)
         return {'snv':final_out,'table':final_out_table}
 
 @app.post("/MSC",tags=['Transform Algorithms'])
 def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure = None):
         MSC = msc()
-        final_out,final_out_table = scatter_correction(parentName, childName, sample,MSC,'T_MSC', inputf)
+        final_out,final_out_table = PT_scatter_correction(parentName, childName, sample,MSC,'T_MSC', inputf)
         return {'msc':final_out,'table':final_out_table}
 
 
 @app.post("/savitzkyGolay",tags=['Spectral Pretreatment Controller'])
 def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,polynomial:int=2,window:int =5,inputf: JSONStructure = None):
-    smoothed_data = savitzky_golay_f(parentName,childName,sample,derivative,polynomial,window,inputf)
+    smoothed_data = PT_savitzky_golay(parentName,childName,sample,derivative,polynomial,window,inputf)
     return smoothed_data
 
 #**********************************************************************************************
@@ -74,38 +74,13 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 #**********************************************************************************************
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
-def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,
-                  ploynomial: int,derivative: int, inputf: JSONStructure = None):
+def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,ploynomial: int,derivative: int, inputf: JSONStructure = None):
 
    final_data = pls_func(parentName,childName,sample,scatterCorrection, \
    window,ploynomial,derivative,inputf)
 
    return final_data
 
-"""
-@app.get("/pls",tags=['Ml Algorithms'])
-def PLS_regression():
-
-    global df
-    df_p=df.T.reset_index()
-    df_p.rename(columns=df_p.iloc[0])
-    df_p.columns=df_p.iloc[0]
-    df_p=df_p.drop(df_p.index[0])
-    print(df_p)
-
-    x_pls=df_p.drop(['Wavelength (nm)'], axis=1).values
-    x_pls=signal.savgol_filter(x_pls, 17, polyorder = 2,deriv=2)
-
-    print(x_pls)
-
-    y_pred=pls.predict(x_pls)
-    print(y_pred)
-    df_final=pd.DataFrame(y_pred)
-    df_final.columns=['% Moisture Content','% Fat Content', '% Protein Content']
-    df_final=df_final.round(decimals=1)
-    final=df_final.to_json(orient='records')
-    return {"preditedValues":final}
-"""
 #**********************************************************************************************
 #-------------------------------File Upload Functions-----------------------------------------
 #**********************************************************************************************
@@ -124,54 +99,35 @@ def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
 
 @app.post("/uploadFile",tags=['File Upload Controller'])
 def upload_file(file: UploadFile = File(...)):
-   global df
-   global maincolumns
-   file=file.file.read()
 
-   try:
-       df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
-   except:
-       df=pd.read_csv(pd.io.common.BytesIO(file))
+    file=file.file.read()
+    parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
 
-
-   if '% Moisture Content' in df.columns:
-
-       df.rename(columns = {'Wavelength (nm)' : 'Wavelength'}, inplace = True)
-       df1=df
-       df1=df1.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis = 1)
-       df1=df1.T
-       df1.columns=df1.iloc[0]
-       df1 = df1.iloc[1:]
-       df1=df1.reset_index()
-       df1.rename(columns = {'index' : 'Wavelength (nm)'}, inplace = True)
-       pd.set_option('display.max_columns', None)
-       print(df1.columns)
-       #print(df1)
-       final_out=df.to_json(orient='records')
-       final_out1=df1.to_json(orient='records')
-       return {'table':final_out,'graph':final_out1}
-
-   else:
-
-       df[df.columns[0]]=np.around(df[df.columns[0]])
-       df.set_index('Wavelength (nm)', inplace=True)
-       df2=df.reset_index()
-       df2 = df2.loc[:, ~df2.columns.str.contains('^Unnamed')]
-       df1 = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-       df1.dropna(inplace=True)
-       df2.dropna(inplace=True)
-       df1=df1.T
-       df1.index.names = ['Wavelength']
-       df1=df1.reset_index()
-       #df1.columns = np.arange(len(df1.columns))
+    try:
+        df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
+    except:
+        df=pd.read_csv(pd.io.common.BytesIO(file))
 
 
+    if '% Moisture Content' in df.columns:
 
-       final_out=df2.to_json(orient='records')
-       final_out1=df1.to_json(orient='records')
+        df = df.round(4)                                                                     # round to 4 decimals only
+        df1 = df.drop(parameters, axis = 1)                                                  # drop prediction parameters
+        y_param_columns = df[parameters]
+
+        df1 = df1.T                                                                          # Transpose for plotting
+        df1 = df1.rename(columns=df1.iloc[0]).drop(df1.index[0])                             # Make Sample names as column names
+        df1.reset_index(inplace = True)                                                      # Reset index
+        df1.rename(columns = {'index' : 'Wavelength (nm)'}, inplace = True)                  # rename index column to
 
 
-       return {'table':final_out1,'graph':final_out}
+        final_param=y_param_columns.copy()                                                   # Copy prediction parameter values
+        final_param=final_param.to_json(orient='records')
+
+        final_table=df.to_json(orient='records')                                             # Convert to json
+        final_graph=df1.to_json(orient='records')
+
+        return {'table':final_table,'graph':final_graph,'parameters':final_param}
 
 
 #**********************************************************************************************
