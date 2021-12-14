@@ -78,41 +78,9 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 
     df=pd.DataFrame(input_file)
-    #df = pd.read_excel(input_file,index_col=0,engine='openpyxl')
-    print("PLS INPUT")
-
-    print(df)
-    SNV=snv()
-    MSC=msc()
-    df=df.fillna(df.mean())
-
-    y=df[['% Moisture Content','% Fat Content', '% Protein Content']].values
-    x=df.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis=1)
-
-    x=x.set_index('Wavelength (nm)')
-    x1=x.T
-
-    file_path = "Models/"+parent+"/"+child+"/"
-    if not os.path.exists(file_path +"scatter_correction/"):
-        os.makedirs(file_path +"scatter_correction/")
-    if not os.path.exists(file_path +"pretreatment/"):
-        os.makedirs(file_path + "pretreatment/")
 
 
-    if scatterCorrection == 'SNV':
-        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_snv.pkl', 'wb'))
-        x_scatter=SNV.fit_transform(x1)
-    elif scatterCorrection == 'MSC':
-        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
 
-        x_scatter=MSC.fit_transform(x1)
-
-
-    Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative)
-    sav_gol_param = [window,polynomial,derivative]
-
-    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_svgolay.pkl', 'wb'))
-    x_final=Xpt.T
 
 
     mse = []
