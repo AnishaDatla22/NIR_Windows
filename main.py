@@ -7,6 +7,7 @@ Created on Mon Jun 22 13:02:52 2020
 
 
 from Setup import *
+from Format_data import *
 from Pretreatment import *
 from Nirsensor import *
 from NIR_Software.authentication.auth import Auth
@@ -65,7 +66,7 @@ def tr_algo_msc(parentName:str, childName:str, sample:str, inputf: JSONStructure
 
 
 @app.post("/savitzkyGolay",tags=['Spectral Pretreatment Controller'])
-def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,polynomial:int=2,window:int =5,inputf: JSONStructure = None):
+def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =2,polynomial:int=2,window:int =11,inputf: JSONStructure = None):
     smoothed_data = PT_savitzky_golay(parentName,childName,sample,derivative,polynomial,window,inputf)
     return smoothed_data
 
@@ -76,14 +77,17 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =1,p
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
 def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,ploynomial: int,derivative: int, inputf: JSONStructure = None):
 
+   parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
    final_data = pls_func(parentName,childName,sample,scatterCorrection, \
-   window,ploynomial,derivative,inputf)
+   window,ploynomial,derivative,inputf,parameters)
 
    return final_data
 
 #**********************************************************************************************
 #-------------------------------File Upload Functions-----------------------------------------
 #**********************************************************************************************
+
+
 
 @app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
 def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
@@ -92,8 +96,10 @@ def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
         df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
     except:
         df=pd.read_csv(pd.io.common.BytesIO(file))
-    df.set_index('Wavelength (nm)', inplace=True)
-    final_pred=upload_predict(df,parent,child,model)
+
+    df = FD_format_data(df)                                                          # Clean data
+
+    final_pred=AN_upload_predict(child,parent,child,model,df)
     return {'prediction':final_pred}
 
 
@@ -111,21 +117,18 @@ def upload_file(file: UploadFile = File(...)):
 
     if '% Moisture Content' in df.columns:
 
-        df = df.round(4)                                                                     # round to 4 decimals only
-        df1 = df.drop(parameters, axis = 1)                                                  # drop prediction parameters
+        df = FD_format_data(df)
+
         y_param_columns = df[parameters]
-
-        df1 = df1.T                                                                          # Transpose for plotting
-        df1 = df1.rename(columns=df1.iloc[0]).drop(df1.index[0])                             # Make Sample names as column names
-        df1.reset_index(inplace = True)                                                      # Reset index
-        df1.rename(columns = {'index' : 'Wavelength (nm)'}, inplace = True)                  # rename index column to
-
-
-        final_param=y_param_columns.copy()                                                   # Copy prediction parameter values
+        final_param=y_param_columns.copy()                                      # Copy prediction parameter values
         final_param=final_param.to_json(orient='records')
 
-        final_table=df.to_json(orient='records')                                             # Convert to json
+        df1 = df.drop(parameters, axis = 1)                                     # drop prediction parameters
+        df1 = FD_Transpose_data(df1)
         final_graph=df1.to_json(orient='records')
+
+        df.reset_index(inplace = True)
+        final_table=df.to_json(orient='records')                                # Convert to json
 
         return {'table':final_table,'graph':final_graph,'parameters':final_param}
 
@@ -147,7 +150,7 @@ def custom_config(parent: str, child: str, name: str,start: float,end: float, re
     res=scansample(filename,name,parent,child,res,0)
     if setting != 'Default':
         input_data=res['graph']
-        predict_pls(name,parent, child, setting, json.loads(input_data))
+        AN_upload_predict(name,parent, child, setting, json.loads(input_data))
     return res
 
 @app.get("/scanCustomSpectralData",tags=['Sensor Controller'])
