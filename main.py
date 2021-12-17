@@ -37,8 +37,8 @@ app.add_middleware(
 
 sensorOpen = 0
 
-if __name__ == '__main__':
-    uvicorn.run("main:app",host="0.0.0.0",workers=1,port=8000)
+if __name__ == '__Main__':
+    uvicorn.run("Main:app",host="0.0.0.0",workers=1,port=8000)
 
 
 
@@ -87,16 +87,20 @@ def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: st
 #-------------------------------File Upload Functions-----------------------------------------
 #**********************************************************************************************
 
+def read_file(file):
 
-
-@app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
-def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
     file=file.file.read()
     try:
         df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
     except:
         df=pd.read_csv(pd.io.common.BytesIO(file))
 
+    return df
+
+@app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
+def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
+
+    df = read_file(file)
     df = FD_format_data(df)                                                          # Clean data
 
     final_pred=AN_upload_predict(child,parent,child,model,df)
@@ -105,15 +109,8 @@ def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
 
 @app.post("/uploadFile",tags=['File Upload Controller'])
 def upload_file(file: UploadFile = File(...)):
-
-    file=file.file.read()
     parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
-
-    try:
-        df=pd.read_excel(pd.io.common.BytesIO(file),sheet_name='Sheet1',engine='openpyxl')
-    except:
-        df=pd.read_csv(pd.io.common.BytesIO(file))
-
+    df = read_file(file)
 
     if '% Moisture Content' in df.columns:
 

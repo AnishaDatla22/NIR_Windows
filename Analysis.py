@@ -2,7 +2,7 @@
 """
 Created on Mon Jun 22 13:02:52 2020
 
-@author: rajesh
+@author: Anisha
 """
 
 
@@ -63,7 +63,7 @@ def AN_upload_predict(name,parent,child,saved_model,input_data):
        file_path = "Models/"+parent+"/"+child+"/"
        file_name = df_pred['samples'].iloc[0]+"_prediction.csv"
        df_pred.to_csv(file_path+file_name)
-       
+
        final_pred=df_pred.to_json(orient='records')
        return final_pred
 

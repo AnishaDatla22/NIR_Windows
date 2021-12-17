@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 22 13:02:52 2020
-@author: rajesh
+@author: Anisha
 """
 
 
@@ -19,7 +19,7 @@ def pt_post_scatter_data_format(file_path,file_name,model_name,model,df_final):
         os.makedirs(file_path)
     dump(model, open(model_name, 'wb'))                    # save model info
 
-    #df_final = df_final.round(4)
+    
     df_write = df_final.round(4).reset_index()
     df_write.to_csv(file_name)                              # write to csv
 
