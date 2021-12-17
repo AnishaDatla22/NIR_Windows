@@ -37,8 +37,8 @@ app.add_middleware(
 
 sensorOpen = 0
 
-if __name__ == '__Main__':
-    uvicorn.run("Main:app",host="0.0.0.0",workers=1,port=8000)
+if __name__ == '__main__':
+    uvicorn.run("main:app",host="0.0.0.0",workers=1,port=8000)
 
 
 

@@ -8,6 +8,9 @@ Created on Mon Jun 22 13:02:52 2020
 
 from Setup import *
 
+#**********************************************************************************************
+#-------------------------------Get reference data Functions-----------------------------------------
+#**********************************************************************************************
 def scanRef(res):
 
     #get_scan_config_id()
@@ -31,15 +34,36 @@ def scanRef(res):
     df=df[:444]
     df1=df.T.reset_index()
     df1.columns = np.arange(len(df1.columns))
-    final_out=df.to_json(orient='records')
-    final_out1=df1.to_json(orient='records')
+    final_graph=df.to_json(orient='records')
+    final_table=df1.to_json(orient='records')
 
 
-    return {"graph":final_out}
+    return {"graph":final_graph}
 
+def mergeALlRef():
+    path = 'referrence/'
+    result = glob.glob('referrence/ref*.csv')
+    df1=pd.DataFrame()
+
+    df=pd.read_csv(result[0])
+    df1['Wavelength (nm)']=df['Wavelength (nm)']
+
+    for i in result:
+        colname=i.split("_")
+        df=pd.read_csv(i)
+        df=df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        df1[colname[1]]=df['absorption']
+    final_out=df1.to_json(orient='records')
+    df1.to_csv(path+'Allref.csv')
+    return {'table':final_out}
+
+#**********************************************************************************************
+#-------------------------------Scan Samples Functions-----------------------------------------
+# #Scan_type - 0:Scan 1:ScanOverlay 2:ScanOverlayMulti
+#**********************************************************************************************
 def scansample(fileName,name,parent,child,res,scan_type):
 
-    #Scan_type - 0:Scan 1:ScanOverlay 2:ScanOverlayMulti
+
 
     date=datetime.datetime.now().date()
     date=str(date)
@@ -105,20 +129,3 @@ def scanoverlaymultiAutomatic(fileName,name,parent,child,res,stime,number):
         newname = name + str(i)
         result = scansample(fileName,newname,parent,child,res,2)
     return result
-
-def mergeALlRef():
-    path = 'referrence/'
-    result = glob.glob('referrence/ref*.csv')
-    df1=pd.DataFrame()
-
-    df=pd.read_csv(result[0])
-    df1['Wavelength (nm)']=df['Wavelength (nm)']
-
-    for i in result:
-        colname=i.split("_")
-        df=pd.read_csv(i)
-        df=df.loc[:, ~df.columns.str.contains('^Unnamed')]
-        df1[colname[1]]=df['absorption']
-    final_out=df1.to_json(orient='records')
-    df1.to_csv(path+'Allref.csv')
-    return {'table':final_out}
