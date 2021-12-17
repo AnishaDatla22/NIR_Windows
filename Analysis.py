@@ -7,7 +7,7 @@ Created on Mon Jun 22 13:02:52 2020
 
 
 from Setup import *
-
+from Format_data import *
 
 #**********************************************************************************************
 #-------------------------------Prediction Functions-----------------------------------------
@@ -60,6 +60,10 @@ def AN_upload_predict(name,parent,child,saved_model,input_data):
        df_pred=df_pred.round(2)
        df_pred=df_pred.drop('prediction',axis=1)
 
+       file_path = "Models/"+parent+"/"+child+"/"
+       file_name = df_pred['samples'].iloc[0]+"_prediction.csv"
+       df_pred.to_csv(file_path+file_name)
+       
        final_pred=df_pred.to_json(orient='records')
        return final_pred
 
@@ -206,7 +210,41 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         f.write(json_object)
     return final_data
 
-def A_pls_algo(parent,child,sample,input_file,parameters):
-    return 0
+def A_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
 
-from main import *
+
+    df=pd.DataFrame(input_file)
+
+    SNV=snv()
+    MSC=msc()
+    df=df.fillna(df.mean())
+
+    y=df[['% Moisture Content','% Fat Content', '% Protein Content']].values
+    x=df.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis=1)
+
+    x=x.set_index('Wavelength (nm)')
+    x1=x.T
+
+    file_path = "Models/"+parent+"/"+child+"/"
+    if not os.path.exists(file_path +"scatter_correction/"):
+        os.makedirs(file_path +"scatter_correction/")
+    if not os.path.exists(file_path +"pretreatment/"):
+        os.makedirs(file_path + "pretreatment/")
+
+
+    if scatterCorrection == 'SNV':
+        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_snv.pkl', 'wb'))
+        x_scatter=SNV.fit_transform(x1)
+    elif scatterCorrection == 'MSC':
+        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
+
+        x_scatter=MSC.fit_transform(x1)
+
+
+    Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative,axis=0)
+    sav_gol_param = [window,polynomial,derivative]
+
+    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_svgolay.pkl', 'wb'))
+    x_final=Xpt.T
+
+    return 0

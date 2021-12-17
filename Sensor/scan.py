@@ -5,7 +5,7 @@ import ctypes
 import os
 
 
-dlp_nano_lib = ctypes.CDLL("Sensor/src/libdlpspec.dll")
+dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
 #dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
 
 class scanConfigHead(ctypes.Structure):
