@@ -37,9 +37,11 @@ import hid
 from Sensor.commands import *
 from Sensor.usb_comm import *
 
+from ctypes import *
 
 VID = 0x0451
 PID = 0x4200
+
 
 #***************************************************
 #  MISC
@@ -50,6 +52,8 @@ import pickle
 from pickle import dump
 import math
 import glob
+
+
 #***************************************************
 # Machine Learning
 #***************************************************
@@ -60,3 +64,8 @@ from scipy import signal
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import mean_squared_error, r2_score
+
+
+#***************************************************
+# JSON Structure
+#***************************************************

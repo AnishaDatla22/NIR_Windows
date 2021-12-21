@@ -1,12 +1,13 @@
 #!/usr/bin/env python3.7
 
-import hid
-import time
-from ctypes import *
-from Sensor.commands import *
+
 from Sensor.scan import *
-import math
+from Sensor.commands import *
 import datetime
+import math
+import time
+import hid
+from loguru import logger
 
 TIMEOUT = 1000
 READ_FILE_SIZE = 0
@@ -15,16 +16,19 @@ tisensor = 0
 scan_interpret_done = 0
 device_busy = 1
 scanresults =scanResults()
+serial_number = 0
 
+#**********************************************************************************************
+#-------------------------------Helper Functions-----------------------------------------
+#**********************************************************************************************
 #Open Devices
 def setup(VID,PID):
     global tisensor
-
     device_list = hid.enumerate(VID,PID)
 
     while device_list == []:
         device_list = hid.enumerate(VID,PID)
-    print(device_list)
+    logger.info(device_list)
 
     tisensor= hid.device()
     time.sleep(0.05)
@@ -52,7 +56,7 @@ def extract_flags(flag_byte):
     FLG_STATUS["ERR"] = (flag_byte & 0x30) >> 4
     FLG_STATUS["R/W"] = (flag_byte & 0x80) >> 7
     FLG_STATUS["RDY"] = (flag_byte & 0x40) >> 6
-    print("R/W: " + str(FLG_STATUS["R/W"]) +
+    logger.info("R/W: " + str(FLG_STATUS["R/W"]) +
           " Rdy: " + str(FLG_STATUS["RDY"]) +
           " Err: " + str(FLG_STATUS["ERR"]) )
     return FLG_STATUS
@@ -71,7 +75,7 @@ def process_data(data,cmd_name):
     elif status["R/W"] == 1:                      # read  transaction
         seq_no = data[1]
         length = data[2] + (data[3] << 8)
-        print("Seq_no: " + str(seq_no) + " Packet_Len: " + str(length))
+        logger.info("Seq_no: " + str(seq_no) + " Packet_Len: " + str(length))
         read_data_process(data[4:],cmd_name)
 
 # cmd specific decode of data
@@ -83,35 +87,46 @@ def read_data_process(rd_data,cmd_name):
         for i in range(len(rd_data)):
             size += rd_data[i] << (i*8)
         READ_FILE_SIZE = size
-        print("READ FILE SIZE: " + str(READ_FILE_SIZE) + "\n")
+        logger.info("READ FILE SIZE: " + str(READ_FILE_SIZE) + "\n")
 
-    elif (cmd_name == cmd.CFG_APPY) or (cmd_name == cmd.ERR_STAT) or (cmd_name == cmd.GET_HIBM) or (cmd_name == cmd.GET_SNUM):
+    elif (cmd_name == cmd.CFG_APPY) or (cmd_name == cmd.ERR_STAT) or (cmd_name == cmd.GET_HIBM):
         for i in rd_data:
-            print(hex(i))
+            logger.info(hex(i))
+
+    elif cmd_name == cmd.GET_SNUM:
+        global serial_number
+        s = ""
+        for i in rd_data:
+            if i != 0:
+                y = hex(i)
+                bytes_object = bytes.fromhex(y[2:])
+                ascii_string = bytes_object.decode("ASCII")
+                s = s + ascii_string
+        serial_number = (str.encode(s))
 
     elif cmd_name == cmd.GET_TDAT:
-        print("{}-{}-{}  {}:{}:{}\n".format(rd_data[2],rd_data[1],
+        logger.info("{}-{}-{}  {}:{}:{}\n".format(rd_data[2],rd_data[1],
                                             rd_data[0],rd_data[4],
                                             rd_data[5],rd_data[6]))
 
     elif cmd_name == cmd.LED_TEST:
         if rd_data[0] == 0:
-            print("LED TEST PASSED\n")
+            logger.info("LED TEST PASSED\n")
         else:
-            print("LED TEST FAIL\n")
+            logger.info("LED TEST FAIL\n")
 
     elif cmd_name == cmd.NUM_CONF:
-        print("NUM OF STORED SCAN CONFIGS: " + str(rd_data[0]) + "\n")
+        logger.info("NUM OF STORED SCAN CONFIGS: " + str(rd_data[0]) + "\n")
 
     elif cmd_name == cmd.GET_SCON:
-        print("ACTIVE SCAN CONFIG: " + str(rd_data[0]) + "\n")
+        logger.info("ACTIVE SCAN CONFIG: " + str(rd_data[0]) + "\n")
 
     elif cmd_name == cmd.GET_GAIN:
-        print("PGA GAIN SET AT: " + str(rd_data[0]) + "\n")
+        logger.info("PGA GAIN SET AT: " + str(rd_data[0]) + "\n")
 
     elif cmd_name == cmd.DEV_STAT:
         global device_busy
-        print("Device Status: "+str(rd_data[0]) + "\n")
+        logger.info("Device Status: "+str(rd_data[0]) + "\n")
         if rd_data[0] == 1:
             device_busy = 0
 
@@ -119,22 +134,21 @@ def read_data_process(rd_data,cmd_name):
         time = 0
         for i in range(len(rd_data)):
            time += rd_data[i] << (i*8)
-        print("SCAN_TIME: " + str(time)+ "\n")
+        logger.info("SCAN_TIME: " + str(time)+ "\n")
 
     elif cmd_name == cmd.INT_STAT:
         global scan_interpret_done
         scan_interpret_done = rd_data[0]
-        print("Scan Interpret Done:" +str(rd_data[0])+"\n")
+        logger.info("Scan Interpret Done:" +str(rd_data[0])+"\n")
 
     elif cmd_name == cmd.TIV_VERS:
-        print("Tiva SW version: " + str(rd_data[0:4]))
-        print("DLPC SW version: " + str(rd_data[4:8]))
-        print("DLPC Flash version: " + str(rd_data[8:12]))
-        print("DLP Spectrum Library version: " + str(rd_data[12:16]))
-        print("EEPROM Calibration version: " + str(rd_data[16:20]))
-        print("EEPROM Reference version: " + str(rd_data[20:24]))
-        print("EEPROM Scan Configuration version: " + str(rd_data[24:28]))
-
+        logger.info("Tiva SW version: " + str(rd_data[0:4]))
+        logger.info("DLPC SW version: " + str(rd_data[4:8]))
+        logger.info("DLPC Flash version: " + str(rd_data[8:12]))
+        logger.info("DLP Spectrum Library version: " + str(rd_data[12:16]))
+        logger.info("EEPROM Calibration version: " + str(rd_data[16:20]))
+        logger.info("EEPROM Reference version: " + str(rd_data[20:24]))
+        logger.info("EEPROM Scan Configuration version: " + str(rd_data[24:28]))
 
 # Gets scan/ref data
 def read_burst_data(cmd_name,cmd,ret_len):
@@ -156,10 +170,7 @@ def read_burst_data(cmd_name,cmd,ret_len):
     FILE = rfile
     return FILE
 
-
-
 #Write to file
-
 def write_to_file(fname,data):
 
     f1 = open(fname,'w')
@@ -169,6 +180,10 @@ def write_to_file(fname,data):
         f1.write("\n\n")
     f1.close()
 
+
+#**********************************************************************************************
+#-------------------------------Sensor Functions-----------------------------------------
+#**********************************************************************************************
 #Get Version Numbers
 def get_ver():
     send_info (CMD_TIV_VERS[0], CMD_TIV_VERS[1:8], CMD_TIV_VERS[8])
@@ -182,12 +197,12 @@ def set_date():
     cur_tdat.extend([year,now.month,now.day,weekday,now.hour,now.minute,now.second])
 
     send_info (CMD_SET_TDAT[0], cur_tdat, CMD_SET_TDAT[8]) # Set time and date
+    time.sleep(0.05)
+    send_info (CMD_GET_SNUM[0], CMD_GET_SNUM[1:8], CMD_GET_SNUM[8]) # Get serial number
 
 #Get Date and Time
 def get_date():
     send_info (CMD_GET_TDAT[0], CMD_GET_TDAT[1:8], CMD_GET_TDAT[8]) # Get time and date
-    time.sleep(0.05)
-    send_info (CMD_GET_SNUM[0], CMD_GET_SNUM[1:8], CMD_GET_SNUM[8]) # Get serial number
 
 def get_sleep_mode():
      send_info (CMD_GET_HIBM[0], CMD_GET_HIBM[1:8], CMD_GET_HIBM[8]) # Get sleep mode flag
@@ -275,7 +290,7 @@ def get_results():
 
 
     #write results to txt file
-    write_to_file("scanResults.txt",results)
+    #write_to_file("scanResults.txt",results)
 
     return results
 
@@ -289,21 +304,22 @@ def get_ref_data():
     scan_ref = scan_Ref_interpret(refData,refMatrix,scanresults)
     #Unpack to python dict
     ref_results = unpack_fields(scan_ref)
-    write_to_file("refResults.txt",ref_results)
+    #write_to_file("refResults.txt",ref_results)
 
     return ref_results
 
 
 
 def set_scan_config(scan_name,start,end,repeats,res,patterns):
+        global serial_number
         #patterns = (end - start)/res
-        serial_scan_config = set_config(scan_name, int(start), int(end), int(repeats), int(patterns), int(res))
+        serial_scan_config = set_config(scan_name, int(start), int(end), int(repeats), int(patterns), int(res), serial_number)
         buf_len = len(serial_scan_config)
         data = []
 
-        print(serial_scan_config)
-        print("\n")
-        print(len(serial_scan_config))
+        (serial_scan_config)
+        logger.info("\n")
+        logger.info(len(serial_scan_config))
 
         data = CMD_CFG_APPY[1:8]
         data[2] = 0x00
@@ -315,14 +331,14 @@ def set_scan_config(scan_name,start,end,repeats,res,patterns):
         #data1[2] = 0x01
         data1[3] = len(serial_scan_config[58:]) + 2
         data1.extend(serial_scan_config[58:])
-        print(data)
-        print(data1)
+        logger.info(data)
+        logger.info(data1)
 
 
         send_info(CMD_CFG_APPY[0], data, 4)
-        print("done")
+        logger.info("done")
         send_info(CMD_CFG_APPY[0], data1, CMD_CFG_APPY[8])
-        print("done")
+        logger.info("done")
 '''
 
 def set_scan_config(scan_name,start,end,repeats,res,patterns):

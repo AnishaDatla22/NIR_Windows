@@ -210,7 +210,7 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         f.write(json_object)
     return final_data
 
-def A_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
+def AN_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
 
 
     df=pd.DataFrame(input_file)

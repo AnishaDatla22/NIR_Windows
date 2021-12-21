@@ -11,10 +11,12 @@ from Setup import *
 #**********************************************************************************************
 #-------------------------------Get reference data Functions-----------------------------------------
 #**********************************************************************************************
-def scanRef(res):
+def NS_scanRef(res):
 
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)
     #get_scan_config_id()
-
     start_scan(0) # donot store in sd card
     results = get_results() # get scan results
     ref_scan = get_ref_data() # get reference values
@@ -40,7 +42,7 @@ def scanRef(res):
 
     return {"graph":final_graph}
 
-def mergeALlRef():
+def NS_mergeALlRef():
     path = 'referrence/'
     result = glob.glob('referrence/ref*.csv')
     df1=pd.DataFrame()
@@ -61,20 +63,18 @@ def mergeALlRef():
 #-------------------------------Scan Samples Functions-----------------------------------------
 # #Scan_type - 0:Scan 1:ScanOverlay 2:ScanOverlayMulti
 #**********************************************************************************************
-def scansample(fileName,name,parent,child,res,scan_type):
+def NS_scansample(fileName,name,parent,child,res,scan_type):
 
-
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)                     # Set Active scan config
 
     date=datetime.datetime.now().date()
     date=str(date)
 
     path_sample='sample/'+parent+'/'+child+'/'
-    path_overlay='overlay/'+parent+'/'+child+'/'
     if not os.path.isdir(path_sample+date):
         os.makedirs(path_sample+date)
-    if not os.path.isdir(path_overlay+date):
-        os.makedirs(path_overlay+date)
-
     #get_scan_config_id()
 
     start_scan(0) # donot store in sd card
@@ -95,7 +95,7 @@ def scansample(fileName,name,parent,child,res,scan_type):
 
 
     if scan_type == 1:
-        fileName=path_overlay+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
+        fileName=path_sample+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
         df.to_csv(fileName,index=False)
     elif scan_type == 2:
         df_final=pd.read_csv(fileName)
@@ -113,7 +113,7 @@ def scansample(fileName,name,parent,child,res,scan_type):
         final_out=df_final.to_json(orient='records')
     else:
         df.to_csv(path_sample+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv")
-        fileName = path_overlay+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
+        fileName = path_sample+str(date)+"/"+name+'_'+str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))+'_'+str(res)+".csv"
         df.to_csv(fileName,index=False)
         final_out=df.to_json(orient='records')
 
@@ -123,7 +123,7 @@ def scansample(fileName,name,parent,child,res,scan_type):
 
     return {'fileName':fileName,'resolution':res,'table':final_out1,'graph':final_out}
 
-def scanoverlaymultiAutomatic(fileName,name,parent,child,res,stime,number):
+def NS_scanoverlaymultiAutomatic(fileName,name,parent,child,res,stime,number):
 
     for i in range(1,number+1):
         newname = name + str(i)

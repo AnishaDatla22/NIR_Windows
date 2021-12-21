@@ -1,12 +1,18 @@
-#!/usr/bin/env python3.7
+
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 22 13:02:52 2020
+
+@author: Anisha
+"""
 
 
 import ctypes
 import os
+from loguru import logger
 
-
-dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
 #dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
+dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
 
 class scanConfigHead(ctypes.Structure):
     _fields_ = [
@@ -153,11 +159,11 @@ def scan_interpret(file,interpret):
     if interpret == 0:
         #raw data to be interpreted and formatted
         err = dlp_nano_lib.dlpspec_scan_interpret(buffer_pointer,size_number,res_pointer)
-        print("Scan result interpret Error" + str(err))
+        logger.info("Scan result interpret Error" + str(err))
     else:
         #raw data already interpreted by sensor, just format
         err = dlp_nano_lib.format_scan_interpret(buffer_pointer,res_pointer)
-        print("Format Scan interpret Error" + str(err))
+        logger.info("Format Scan interpret Error" + str(err))
 
     return results
 
@@ -186,11 +192,11 @@ def scan_Ref_interpret(refData, refMatrix, scanData):
     err = dlp_nano_lib.dlpspec_scan_interpReference(buffer_pointer,size_number,matrix_pointer,matrix_size,
  res_ptr, ref_pointer)
 
-    print("Ref interpret Error" + str(err))
+    logger.info("Ref interpret Error" + str(err))
 
     return ref_results
 
-def set_config(scan_name,start,end,repeats,patterns,res):
+def set_config(scan_name,start,end,repeats,patterns,res,serial_no):
 
     config = scanConfig()
 
@@ -202,7 +208,7 @@ def set_config(scan_name,start,end,repeats,patterns,res):
                 elif fname == "scanConfigIndex":
                     value = 4
                 elif fname == "scanConfig_serial_number":
-                    value = str.encode("6100125")
+                    value = serial_no
                 elif fname == "config_name":
                     value = str.encode(scan_name)
                 setattr(config.head,fname,value)
@@ -227,7 +233,7 @@ def set_config(scan_name,start,end,repeats,patterns,res):
     BufSizeptr = ctypes.byref(BufSize)
 
     err = dlp_nano_lib.dlpspec_get_scan_config_dump_size(config_ptr, BufSizeptr)
-    print("Config size ERROR: " + str(err))
+    logger.info("Config size ERROR: " + str(err))
 
 
     config_serial = ctypes.create_string_buffer(BufSize.value)
@@ -236,7 +242,7 @@ def set_config(scan_name,start,end,repeats,patterns,res):
 
     err = dlp_nano_lib.dlpspec_scan_write_configuration(config_ptr, config_serial_ptr, config_len)
 
-    print("Config serialize ERROR: " + str(err))
+    logger.info("Config serialize ERROR: " + str(err))
 
 
     serial_data = []
