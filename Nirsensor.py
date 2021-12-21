@@ -127,5 +127,5 @@ def NS_scanoverlaymultiAutomatic(fileName,name,parent,child,res,stime,number):
 
     for i in range(1,number+1):
         newname = name + str(i)
-        result = scansample(fileName,newname,parent,child,res,2)
+        result = NS_scansample(fileName,newname,parent,child,res,2)
     return result

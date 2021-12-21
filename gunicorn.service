@@ -8,13 +8,13 @@ PIDFile=/run/gunicorn/pid
 User=ubuntu
 Group=www-data
 WorkingDirectory=/home/ubuntu/NIRO
-ExecStart=/usr/bin/gunicorn3 --workers 4  --bind unix:svsitenote_python_v1.sock -m 007 nir_rest:app
+ExecStart=/usr/bin/gunicorn3 --workers 4  --bind unix:svsitenote_python_v1.sock -m 007 main:app
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s TERM $MAINPID
 PrivateTmp=true
 
 [Install]
-WantedBy=multi-user.target 
+WantedBy=multi-user.target
 
 server {
 listen 80;

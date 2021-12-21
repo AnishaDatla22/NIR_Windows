@@ -11,8 +11,8 @@ import ctypes
 import os
 from loguru import logger
 
-#dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
-dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
+dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
+#dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
 
 class scanConfigHead(ctypes.Structure):
     _fields_ = [

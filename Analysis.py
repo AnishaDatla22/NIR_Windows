@@ -17,16 +17,16 @@ def an_predict_flow(df,parent,child,saved_model):
     #Scatter Correction
     file_path = 'Models/'+parent+'/'+child
     file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]+'_snv.pkl'
-
+    print(df)
 
     df = FD_Transpose_data(df)
     df.set_index('Wavelength (nm)', inplace=True)
-
+    print(df)
 
     with open(file_name_sc, 'rb') as file:
         SC=pickle.load(file)                   # SNV or MSC
     Xscatter=SC.fit_transform(df)
-
+    print(Xscatter)
    # Pretreatment
     file_name_pt = file_path + '/pretreatment/'+saved_model.rsplit('_', 1)[0]+'_SG.pkl'
 

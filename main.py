@@ -15,14 +15,7 @@ from NIR_Software.sensor.scan import Scan
 from Analysis import *
 from Models import *
 
-import logging
-import sys
-from pprint import pformat
 
-from fastapi import FastAPI
-from loguru import logger
-from loguru._defaults import LOGURU_FORMAT
-from starlette.requests import Request
 
 
 app = FastAPI(title="NIR Spectroscopy",debug = True)
@@ -106,7 +99,7 @@ def index(request: Request) -> None:
     return None
 
 if __name__ == '__main__':
-    uvicorn.run("main:app",host="0.0.0.0",workers=1,port=8000,log_config=log_config,log_level='info')
+    uvicorn.run("main:app",host="0.0.0.0",workers=1,port=8000)
 
 #**********************************************************************************************
 #-------------------------------PreTreatment Functions-----------------------------------------
@@ -200,11 +193,15 @@ def custom_config(parent: str, child: str, name: str,start: float,end: float, re
     #key = "{:.2f}".format(res)
     #set_scan_config(name,start,end,repeat,res,nmwidth[key])
 
-    res=NS_scansample(filename,name,parent,child,res,0)
+    result=NS_scansample(filename,name,parent,child,res,0)
     if setting != 'Default':
-        input_data=res['graph']
-        AN_upload_predict(name,parent, child, setting, json.loads(input_data))
-    return res
+        input_data = json.loads(result['graph'])
+        data = pd.DataFrame(input_data)
+        data = FD_format_data(data)
+        data = FD_Transpose_data(data)
+        data.set_index('Wavelength (nm)', inplace=True)                         # Set wavelength column as index
+        AN_upload_predict(name,parent, child, setting,data)
+    return result
 
 @app.get("/scanCustomSpectralData",tags=['Sensor Controller'])
 def custom_config(parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float,setting: str):
