@@ -75,5 +75,6 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 
 #***************************************************
-# JSON Structure
+# GLOBALS
 #***************************************************
+MAX_PLS_COMPONENTS = 10

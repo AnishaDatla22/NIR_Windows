@@ -19,7 +19,7 @@ def pt_post_scatter_data_format(file_path,file_name,model_name,model,df_final):
         os.makedirs(file_path)
     dump(model, open(model_name, 'wb'))                    # save model info
 
-    
+
     df_write = df_final.round(4).reset_index()
     df_write.to_csv(file_name)                              # write to csv
 
@@ -57,12 +57,13 @@ def PT_savitzky_golay(parent,child,sample,derivative,polynomial,window,input_fil
 
     formatted_data = FD_format_data(input_file)
     spectra_values = formatted_data.values                                                       # convert to numpy to feed sav_gol filter
+
     smoothed = signal.savgol_filter(spectra_values, window, polynomial,derivative,axis=0)
     df_final = pd.DataFrame(smoothed,index=formatted_data.index,columns=formatted_data.columns)   # convert numpy to dataframe
 
     Model_path = "Models/"+parent+"/"+child+"/pretreatment/"
     file_name = Model_path + sample + "_SG.csv"
-    model_name = Model_path + sample+'_SG.pkl'
+    model_name = Model_path + sample +'_SG.pkl'
     sav_gol_param = [window,polynomial,derivative]
 
     final_out_graph,final_out_table = pt_post_scatter_data_format(Model_path,file_name,model_name,sav_gol_param,df_final)

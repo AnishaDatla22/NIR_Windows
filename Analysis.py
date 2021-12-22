@@ -14,30 +14,33 @@ from Format_data import *
 #**********************************************************************************************
 def an_predict_flow(df,parent,child,saved_model):
 
-    #Scatter Correction
-    file_path = 'Models/'+parent+'/'+child
-    file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]+'_snv.pkl'
-    print(df)
+
 
     df = FD_Transpose_data(df)
     df.set_index('Wavelength (nm)', inplace=True)
     print(df)
 
-    with open(file_name_sc, 'rb') as file:
-        SC=pickle.load(file)                   # SNV or MSC
+   #Scatter Correction Check SNV or MSC
+    file_path = 'Models/'+parent+'/'+child
+    file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]
+    try:
+        with open(file_name_sc+'_SNV.pkl', 'rb') as file:
+            SC=pickle.load(file)
+    except:
+        with open(file_name_sc+'_MSC.pkl', 'rb') as file:
+            SC=pickle.load(file)                   # SNV or MSC
     Xscatter=SC.fit_transform(df)
     print(Xscatter)
+
    # Pretreatment
     file_name_pt = file_path + '/pretreatment/'+saved_model.rsplit('_', 1)[0]+'_SG.pkl'
-
     with open(file_name_pt, 'rb') as file:
         sg_param=pickle.load(file)
     Spectra = Xscatter.values
     Xsv = signal.savgol_filter(Spectra,sg_param[0],polyorder = sg_param[1],deriv=sg_param[2],axis=0)
-    #df_Xsv = pd.DataFrame(Xsv,index=Xscatter.index,columns=Xscatter.columns)   # convert numpy to dataframe
     df_Xsv = Xsv.T
-    # Regression
 
+    # Regression
     with open(file_path +'/'+saved_model+'.pkl', 'rb') as file:
         pls=pickle.load(file)
         yhat=pls.predict(df_Xsv)
@@ -72,8 +75,6 @@ def AN_upload_predict(name,parent,child,saved_model,input_data):
 #**********************************************************************************************
 def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
 
-
-
     df=pd.DataFrame(input_file)
 
     SNV=snv()
@@ -94,10 +95,10 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 
     if scatterCorrection == 'SNV':
-        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_snv.pkl', 'wb'))
+        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_SNV.pkl', 'wb'))
         x_scatter=SNV.fit_transform(x1)
     elif scatterCorrection == 'MSC':
-        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
+        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_MSC.pkl', 'wb'))
 
         x_scatter=MSC.fit_transform(x1)
 
@@ -105,12 +106,12 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
     Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative,axis=0)
     sav_gol_param = [window,polynomial,derivative]
 
-    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_svgolay.pkl', 'wb'))
+    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_SG.pkl', 'wb'))
     x_final=Xpt.T
 
 
     mse = []
-    component = np.arange(1, 13)
+    component = np.arange(1, MAX_PLS_COMPONENTS)
     for i in component:
         pls = PLSRegression(n_components=i)
         # Cross-validation
@@ -138,17 +139,16 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
     dump(pls_opt, open(file_path +sample_name+'_plsmodel.pkl', 'wb'))
 
-    # Fir to the entire dataset
+
 
     y_c = pls_opt.predict(x_final)
     loadings_df=pd.DataFrame(pls_opt.x_loadings_,columns=slcolumns)
     loadings_df['Wavelength (nm)']=pd.DataFrame(np.arange(0,len(pls_opt.x_loadings_)))
     scores_df=pd.DataFrame(pls_opt.x_scores_,columns=slcolumns)
 
-    #scores_df=scores_df[[0:slcolumns]]
+
     scores_df = scores_df.rename(columns={'F1': 'Wavelength (nm)'})
 
-    #print(scores_df)
 
     # Cross-validation
     print(y_c[-5:])
@@ -174,7 +174,6 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 
     y_cv = cross_val_predict(pls_opt, x_final, y, cv=10)
-    #y_cv_test = cross_val_predict(pls_opt, actual, pred, cv=1)
     # Calculate scores for calibration and cross-validation
     score_c = r2_score(y, y_c)
     score_cv = r2_score(y, y_cv)
@@ -233,10 +232,10 @@ def AN_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,der
 
 
     if scatterCorrection == 'SNV':
-        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_snv.pkl', 'wb'))
+        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_SNV.pkl', 'wb'))
         x_scatter=SNV.fit_transform(x1)
     elif scatterCorrection == 'MSC':
-        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_msc.pkl', 'wb'))
+        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_MSC.pkl', 'wb'))
 
         x_scatter=MSC.fit_transform(x1)
 
@@ -244,7 +243,7 @@ def AN_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,der
     Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative,axis=0)
     sav_gol_param = [window,polynomial,derivative]
 
-    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_svgolay.pkl', 'wb'))
+    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_SG.pkl', 'wb'))
     x_final=Xpt.T
 
     return 0
