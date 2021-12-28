@@ -15,7 +15,7 @@ from NIR_Software.authentication.auth import Auth
 from NIR_Software.sensor.scan import Scan
 from Analysis import *
 from Models import *
-
+from Parameters import *
 
 
 
