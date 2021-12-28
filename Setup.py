@@ -41,11 +41,7 @@ from starlette.requests import Request
 #  Sensor
 #***************************************************
 
-import hid
-from Sensor.commands import *
-from Sensor.usb_comm import *
 
-from ctypes import *
 
 VID = 0x0451
 PID = 0x4200

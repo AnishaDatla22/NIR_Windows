@@ -187,7 +187,6 @@ def write_to_file(fname,data):
 #Get Version Numbers
 def get_ver():
     send_info (CMD_TIV_VERS[0], CMD_TIV_VERS[1:8], CMD_TIV_VERS[8])
-
 #Set Date and Time
 def set_date():
     cur_tdat = CMD_SET_TDAT[1:8]
@@ -199,11 +198,9 @@ def set_date():
     send_info (CMD_SET_TDAT[0], cur_tdat, CMD_SET_TDAT[8]) # Set time and date
     time.sleep(0.05)
     send_info (CMD_GET_SNUM[0], CMD_GET_SNUM[1:8], CMD_GET_SNUM[8]) # Get serial number
-
 #Get Date and Time
 def get_date():
     send_info (CMD_GET_TDAT[0], CMD_GET_TDAT[1:8], CMD_GET_TDAT[8]) # Get time and date
-
 def get_sleep_mode():
      send_info (CMD_GET_HIBM[0], CMD_GET_HIBM[1:8], CMD_GET_HIBM[8]) # Get sleep mode flag
 
@@ -350,8 +347,6 @@ def set_scan_config(scan_name,start,end,repeats,res,patterns):
         data = CMD_CFG_APPY[1:8]
         data[3] = buf_len + 2
         data.extend(serial_scan_config)
-
-        tisensor
 
         send_info(CMD_CFG_APPY[0],data[0:64],4)
         send_info(CMD_CFG_APPY[0],data[64:],CMD_CFG_APPY[8])

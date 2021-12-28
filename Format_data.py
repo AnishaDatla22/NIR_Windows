@@ -13,10 +13,11 @@ def FD_format_data(input_file):
     input_data = pd.DataFrame(input_file)                                         # Read input data input will be json
 
     input_data.set_index('Wavelength (nm)', inplace=True)                         # Set wavelength column as index
-                                                                                  # TODO: use regex to match column name and rename to Wavelength (nm)
+                                                                                  # ***TODO: use regex to match column name and rename to Wavelength (nm)
     input_data = input_data.round(4)                                              # 4 decimal places only
     input_data.dropna(axis=0,how='all',inplace=True)                              # Drop any row with all NaN
     input_data.dropna(axis=1,how='all',inplace=True)                              # Drop any column with all NaN
+                                                                                  # ***TODO: Replace zeros with mean
     return input_data
 
 def FD_Transpose_data(input_data):

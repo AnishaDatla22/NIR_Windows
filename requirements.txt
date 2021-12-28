@@ -18,7 +18,7 @@ idna==2.8
 matplotlib==3.3.4
 openpyxl==3.0.6
 python-multipart==0.0.5
-pyspectra
+
 PyInstaller
 requests==2.22.0
 requests-unixsocket==0.2.0

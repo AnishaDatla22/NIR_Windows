@@ -11,8 +11,11 @@ import ctypes
 import os
 from loguru import logger
 
-dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
-#dlp_nano_lib = ctypes.CDLL("Sensor/libdlpspec.dll")
+SCAN_ID = 10
+SCAN_TYPE = 0 # column scan
+
+#dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
+dlp_nano_lib = ctypes.CDLL("Sensor/src/libdlpspec.dll")
 
 class scanConfigHead(ctypes.Structure):
     _fields_ = [
@@ -36,7 +39,6 @@ class scanConfig(ctypes.Structure):
                 ("head",scanConfigHead),
                 ("stub",scanConfigStub)
                ]
-
 
 class calibCoeffs(ctypes.Structure):
     _fields_  = [
@@ -75,7 +77,6 @@ class slewScanConfigR(ctypes.Structure):
               ("head",slewScanConfigHead),
               ("section", slewScanSection * 5)
              ]
-
 
 class scanResults(ctypes.Structure):
 
@@ -190,23 +191,24 @@ def scan_Ref_interpret(refData, refMatrix, scanData):
     res_ptr = ctypes.byref(scanData)
 
     err = dlp_nano_lib.dlpspec_scan_interpReference(buffer_pointer,size_number,matrix_pointer,matrix_size,
- res_ptr, ref_pointer)
+    res_ptr, ref_pointer)
+
 
     logger.info("Ref interpret Error" + str(err))
 
     return ref_results
 
 def set_config(scan_name,start,end,repeats,patterns,res,serial_no):
-
+    global SCAN_ID, SCAN_TYPE
     config = scanConfig()
 
     for field_name, field_type in config._fields_:
         if field_name == "head":
             for fname, ftype in field_type._fields_:
                 if fname == "scan_type":
-                    value = 0
+                    value = SCAN_TYPE
                 elif fname == "scanConfigIndex":
-                    value = 4
+                    value = SCAN_ID
                 elif fname == "scanConfig_serial_number":
                     value = serial_no
                 elif fname == "config_name":

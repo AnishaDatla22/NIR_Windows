@@ -7,20 +7,29 @@ Created on Mon Jun 22 13:02:52 2020
 
 
 from Setup import *
+from Sensor.scan import *
+from Sensor.usb_comm import *
+
+#**********************************************************************************************
+#-------------------------------Helper Functions-----------------------------------------
+#**********************************************************************************************
+def ns_StartScan(res):
+    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
+    config_id = config_table[int(res)]
+    set_active_config(config_id)                     # Set Active scan config
+
+    start_scan(0) # donot store in sd card
+
+    results = get_results() # get scan results
+    ref_scan = get_ref_data() # get reference values
+    return results,ref_scan
 
 #**********************************************************************************************
 #-------------------------------Get reference data Functions-----------------------------------------
 #**********************************************************************************************
 def NS_scanRef(res):
 
-    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
-    config_id = config_table[int(res)]
-    set_active_config(config_id)
-    #get_scan_config_id()
-    start_scan(0) # donot store in sd card
-    results = get_results() # get scan results
-    ref_scan = get_ref_data() # get reference values
-
+    results , ref_scan = ns_StartScan(res)
     # Convert the results into a dataframe
     values = {"Wavelength (nm)":results["wavelength"],"intensity":results["intensity"],"reference":ref_scan["intensity"]}
     df = pd.DataFrame(values)
@@ -36,6 +45,8 @@ def NS_scanRef(res):
     df=df[:444]
     df1=df.T.reset_index()
     df1.columns = np.arange(len(df1.columns))
+
+
     final_graph=df.to_json(orient='records')
     final_table=df1.to_json(orient='records')
 
@@ -65,9 +76,6 @@ def NS_mergeALlRef():
 #**********************************************************************************************
 def NS_scansample(fileName,name,parent,child,res,scan_type):
 
-    config_table = {2:0,3:1,4:2,5:3,7:4,8:5,9:6,10:7}
-    config_id = config_table[int(res)]
-    set_active_config(config_id)                     # Set Active scan config
 
     date=datetime.datetime.now().date()
     date=str(date)
@@ -75,12 +83,8 @@ def NS_scansample(fileName,name,parent,child,res,scan_type):
     path_sample='sample/'+parent+'/'+child+'/'
     if not os.path.isdir(path_sample+date):
         os.makedirs(path_sample+date)
-    #get_scan_config_id()
 
-    start_scan(0) # donot store in sd card
-
-    results = get_results() # get scan results
-    ref_scan = get_ref_data() # get reference values
+    results , ref_scan = ns_StartScan(res)
 
     # Convert the results into a dataframe
     df1=pd.read_csv('referrence/ref_'+str(res)+'_.csv')
