@@ -13,8 +13,8 @@ def PM_parameters():
              "Pharma":["Granulation End Point","Blend Uniformity","Content Uniformity","Assay Content","Moisture Content"]
      }
 
-     parameters = json.dumps(param,indent=4)
-     return parameters
+    parameters = json.dumps(param,indent=4)
+    return parameters
 
 
 def PM_categories():
