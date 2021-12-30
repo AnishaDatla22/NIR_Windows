@@ -81,8 +81,8 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
     MSC=msc()
     df=df.fillna(df.mean())
 
-    y=df[['% Moisture Content','% Fat Content', '% Protein Content']].values
-    x=df.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis=1)
+    y=df[parameters].values
+    x=df.drop(parameters, axis=1)
 
     x=x.set_index('Wavelength (nm)')
     x1=x.T
@@ -175,16 +175,27 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
     y_cv = cross_val_predict(pls_opt, x_final, y, cv=10)
     # Calculate scores for calibration and cross-validation
-    score_c = r2_score(y, y_c)
-    score_cv = r2_score(y, y_cv)
-    score_c_test=r2_score(actual, pred)
-
+    score_c = r2_score(y, y_c,multioutput='raw_values')
+    score_c_r = [round(score,2) for score in score_c]
+    score_cv = r2_score(y, y_cv,multioutput='raw_values')
+    score_cv_r = [round(score,2) for score in score_cv]
+    score_c_test=r2_score(actual, pred,multioutput='raw_values')
+    score_c_test_r = [round(score,2)for score in score_c_test]
 
     # Calculate mean squared error for calibration and cross validation
     mse_c = mean_squared_error(y, y_c)
-
     mse_cv = mean_squared_error(y, y_cv)
     mse_c_test = mean_squared_error(actual, pred)
+
+    rmse_c = mean_squared_error(y, y_c,multioutput='raw_values',squared=False)
+    rmse_cv = mean_squared_error(y, y_cv,multioutput='raw_values',squared=False)
+    rmse_c_test = mean_squared_error(actual, pred,multioutput='raw_values',squared=False)
+    rmse_c_r = [round(rmse,2) for rmse in rmse_c]
+    rmse_cv_r = [round(rmse,2) for rmse in rmse_cv]
+    rmse_c_test_r = [round(rmse,2) for rmse in rmse_c_test]
+    print(rmse_c_r)
+    print(rmse_cv_r)
+    print(rmse_c_test_r)
 
     final_mse=mse_df.to_json(orient='records')
     final_pred=df_pred.to_json(orient='records')
@@ -194,9 +205,10 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 
     final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
-                   'prediction':final_pred,'mse':final_mse,'R2_calib':round(score_c, 2),
-                   'R2_cv':round(score_cv, 2),'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
-                   'R2_calib_pred':round(score_c_test, 2),'MSE_calib_pred':round(mse_c_test, 2)}
+                   'prediction':final_pred,'mse':final_mse,'R2_calib':score_c_r,
+                   'R2_cv':score_cv_r,'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
+                   'R2_calib_pred':score_c_test_r,'MSE_calib_pred':round(mse_c_test, 2),
+                   'RMSE_calib':rmse_c_r,'RMSE_cv':rmse_cv_r,'RMSE_calib_pred':rmse_c_test_r}
 
     file_path = "Models/"+parent+"/"+child+"/graphs/"
     file_name = file_path+sample_name + "_plsmodel.json"
