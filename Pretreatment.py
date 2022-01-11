@@ -20,15 +20,14 @@ def pt_post_scatter_data_format(file_path,file_name,model_name,model,df_final):
     dump(model, open(model_name, 'wb'))                    # save model info
 
 
-    df_write = df_final.round(4).reset_index()
-    df_write.to_csv(file_name)                              # write to csv
-
-
-    final_out_table = FD_Transpose_data(df_final)           # Transpose df_final
+    df_write = df_final.round(4).reset_index()              # write to csv
+    table = FD_Transpose_data(df_final)                     # Transpose df_final
 
 
     final_out_graph=df_write.to_json(orient='records')      # Convert to json
-    final_out_table=final_out_table.to_json(orient='records')
+    final_out_table=table.to_json(orient='records')
+    table.set_index('Wavelength (nm)', inplace=True)   # Set wavelength column as index
+    table.to_csv(file_name)
 
     return final_out_graph,final_out_table
 

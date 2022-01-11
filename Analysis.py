@@ -73,41 +73,30 @@ def AN_upload_predict(name,parent,child,saved_model,input_data):
 #**********************************************************************************************
 #-------------------------------PLS Model Building Functions----------------------------------
 #**********************************************************************************************
-def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
+def an_pls_actvspred(y,y_c,parameters):
 
-    df=pd.DataFrame(input_file)
-
-    SNV=snv()
-    MSC=msc()
-    df=df.fillna(df.mean())
-
-    y=df[parameters].values
-    x=df.drop(parameters, axis=1)
-
-    x=x.set_index('Wavelength (nm)')
-    x1=x.T
-
-    file_path = "Models/"+parent+"/"+child+"/"
-    if not os.path.exists(file_path +"scatter_correction/"):
-        os.makedirs(file_path +"scatter_correction/")
-    if not os.path.exists(file_path +"pretreatment/"):
-        os.makedirs(file_path + "pretreatment/")
+    df_train_pred=pd.DataFrame()
+    param_actual = []
+    param_predict = []
+    for param in parameters:
+        param_actual.append(param + "_actual")
+        param_predict.append(param + "_predict")
 
 
-    if scatterCorrection == 'SNV':
-        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_SNV.pkl', 'wb'))
-        x_scatter=SNV.fit_transform(x1)
-    elif scatterCorrection == 'MSC':
-        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_MSC.pkl', 'wb'))
+    train_pred=list(y_c)
+    train_actual=list(y)
+    df_train_pred['actual']=train_actual
+    df_train_pred['prediction']=train_pred
+    df_train_pred[param_actual] = pd.DataFrame(df_train_pred.actual.tolist(), index= df_train_pred.index)
+    df_train_pred[param_predict] = pd.DataFrame(df_train_pred.prediction.tolist(), index= df_train_pred.index)
+    df_train_pred=df_train_pred.drop(['actual','prediction'], axis = 1)
+    df_train_pred=df_train_pred.round(1)
+    df_pred = df_train_pred.tail(5)
+    df_train_pred['Wavelength (nm)']=pd.DataFrame(np.arange(0,len(train_pred)))
 
-        x_scatter=MSC.fit_transform(x1)
+    return df_train_pred, df_pred
 
-
-    Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative,axis=0)
-    sav_gol_param = [window,polynomial,derivative]
-
-    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_SG.pkl', 'wb'))
-    x_final=Xpt.T
+def an_pls_regression(x_final,y,Model_path,sample_name,parameters):
 
 
     mse = []
@@ -116,7 +105,6 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
         pls = PLSRegression(n_components=i)
         # Cross-validation
         y_cv = cross_val_predict(pls, x_final, y, cv=10)
-
         mse.append(mean_squared_error(y, y_cv))
 
     # Calculate and print the position of minimum in MSE
@@ -125,77 +113,55 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
     print("Suggested number of components: ", msemin+1)
     slcolumns=[]
     for i in range(1,msemin+2):
-        slcolumns.append('F'+str(i))
+        slcolumns.append('PC'+str(i))
 
     mse_df=pd.DataFrame(mse)
     mse_df['Wavelength (nm)']=pd.DataFrame(np.arange(0,len(mse)))
-
     mse_df.columns=['MSE','Wavelength (nm)']
     mse_df=mse_df.round({"MSE":3})
     mse_df = mse_df.astype({"MSE": float})
+
+
     # Define PLS object with optimal number of components
     pls_opt = PLSRegression(n_components=msemin+1)
     pls_opt.fit(x_final, y)
-
-    dump(pls_opt, open(file_path +sample_name+'_plsmodel.pkl', 'wb'))
-
-
-
     y_c = pls_opt.predict(x_final)
+
+    dump(pls_opt, open(Model_path+"/"+sample_name+'_plsmodel.pkl', 'wb'))
+
     loadings_df=pd.DataFrame(pls_opt.x_loadings_,columns=slcolumns)
     loadings_df['Wavelength (nm)']=pd.DataFrame(np.arange(0,len(pls_opt.x_loadings_)))
+
     scores_df=pd.DataFrame(pls_opt.x_scores_,columns=slcolumns)
-
-
-    scores_df = scores_df.rename(columns={'F1': 'Wavelength (nm)'})
+    scores_df = scores_df.rename(columns={'PC1': 'Wavelength (nm)'})
 
 
     # Cross-validation
-    print(y_c[-5:])
-    pred=list(y_c[-5:])
-    actual=list(y[-5:])
-    df_pred=pd.DataFrame()
-    df_pred['actual']=actual
-    df_pred['prediction']=pred
-    df_pred[['moisture_actual','fat_actual','protein_actual']] = pd.DataFrame(df_pred.actual.tolist(), index= df_pred.index)
-    df_pred[['moisture_predict','fat_predict','protein_predict']] = pd.DataFrame(df_pred.prediction.tolist(), index= df_pred.index)
-    df_pred=df_pred.drop(['actual','prediction'], axis = 1)
-    df_pred=df_pred.round(1)
-    train_pred=list(y_c)
-    train_actual=list(y)
-    df_train_pred=pd.DataFrame()
-    df_train_pred['actual']=train_actual
-    df_train_pred['prediction']=train_pred
-    df_train_pred[['moisture_actual','fat_actual','protein_actual']] = pd.DataFrame(df_train_pred.actual.tolist(), index= df_train_pred.index)
-    df_train_pred[['moisture_predict','fat_predict','protein_predict']] = pd.DataFrame(df_train_pred.prediction.tolist(), index= df_train_pred.index)
-    df_train_pred=df_train_pred.drop(['actual','prediction'], axis = 1)
-    df_train_pred=df_train_pred.round(1)
-    df_train_pred['Wavelength (nm)']=pd.DataFrame(np.arange(0,len(train_pred)))
+    df_train_pred,df_pred = an_pls_actvspred(y,y_c,parameters)
+
 
 
     y_cv = cross_val_predict(pls_opt, x_final, y, cv=10)
     # Calculate scores for calibration and cross-validation
-    score_c = r2_score(y, y_c,multioutput='raw_values')
-    score_c_r = [round(score,2) for score in score_c]
-    score_cv = r2_score(y, y_cv,multioutput='raw_values')
-    score_cv_r = [round(score,2) for score in score_cv]
-    score_c_test=r2_score(actual, pred,multioutput='raw_values')
-    score_c_test_r = [round(score,2)for score in score_c_test]
+    r2_c = r2_score(y, y_c,multioutput='raw_values')
+    r2_c_r = [round(score,2) for score in r2_c]
+    r2_cv = r2_score(y, y_cv,multioutput='raw_values')
+    r2_cv_r = [round(score,2) for score in r2_cv]
+    r2_c_test=r2_score(y[-5:], y_cv[-5:],multioutput='raw_values')
+    r2_c_test_r = [round(score,2)for score in r2_c_test]
 
     # Calculate mean squared error for calibration and cross validation
     mse_c = mean_squared_error(y, y_c)
     mse_cv = mean_squared_error(y, y_cv)
-    mse_c_test = mean_squared_error(actual, pred)
+    mse_c_test = mean_squared_error(y[-5:], y_c[-5:])
 
     rmse_c = mean_squared_error(y, y_c,multioutput='raw_values',squared=False)
     rmse_cv = mean_squared_error(y, y_cv,multioutput='raw_values',squared=False)
-    rmse_c_test = mean_squared_error(actual, pred,multioutput='raw_values',squared=False)
+    rmse_c_test = mean_squared_error(y[-5:], y_c[-5:],multioutput='raw_values',squared=False)
     rmse_c_r = [round(rmse,2) for rmse in rmse_c]
     rmse_cv_r = [round(rmse,2) for rmse in rmse_cv]
     rmse_c_test_r = [round(rmse,2) for rmse in rmse_c_test]
-    print(rmse_c_r)
-    print(rmse_cv_r)
-    print(rmse_c_test_r)
+
 
     final_mse=mse_df.to_json(orient='records')
     final_pred=df_pred.to_json(orient='records')
@@ -205,57 +171,44 @@ def pls_func(parent,child,sample_name,scatterCorrection,window,polynomial,deriva
 
 
     final_data = {'train':final_train,'scores':final_scores,'loadings':final_loadings,
-                   'prediction':final_pred,'mse':final_mse,'R2_calib':score_c_r,
-                   'R2_cv':score_cv_r,'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
-                   'R2_calib_pred':score_c_test_r,'MSE_calib_pred':round(mse_c_test, 2),
+                   'prediction':final_pred,'mse':final_mse,'R2_calib':r2_c_r,
+                   'R2_cv':r2_cv_r,'MSE_calib':round(mse_c, 2),'MSE_cv':round(mse_cv, 2),
+                   'R2_calib_pred':r2_c_test_r,'MSE_calib_pred':round(mse_c_test, 2),
                    'RMSE_calib':rmse_c_r,'RMSE_cv':rmse_cv_r,'RMSE_calib_pred':rmse_c_test_r}
 
-    file_path = "Models/"+parent+"/"+child+"/graphs/"
-    file_name = file_path+sample_name + "_plsmodel.json"
-    json_object = json.dumps(final_data, indent = 4)
-
-
-    if not os.path.exists(file_path):
-         os.makedirs(file_path)
-    with open(file_name,'w') as f:
-        f.write(json_object)
     return final_data
 
 def AN_pls_algo(parent,child,sample_name,scatterCorrection,window,polynomial,derivative,input_file,parameters):
 
 
-    df=pd.DataFrame(input_file)
+    param=pd.DataFrame(input_file)
+    try:
+       y=param[parameters].values
+    except:
+       print("Selected Parameters are not present in the file")
 
-    SNV=snv()
-    MSC=msc()
-    df=df.fillna(df.mean())
+    Model_path = "Models/"+parent+"/"+child
+    file_name = Model_path +"/pretreatment/"+ sample_name + "_SG.csv"
+    if not os.path.exists(Model_path):
+         os.makedirs(Model_path)
+    if not os.path.exists(Model_path+'/graphs/'):
+         os.makedirs(Model_path+'/graphs/')
 
-    y=df[['% Moisture Content','% Fat Content', '% Protein Content']].values
-    x=df.drop(['% Moisture Content','% Fat Content', '% Protein Content'], axis=1)
+    try:
+        x =pd.read_csv(file_name)
+        x=x.set_index('Wavelength (nm)')
+        x_final=x.values
+    except:
+        print("Error no pretreatment file")
 
-    x=x.set_index('Wavelength (nm)')
-    x1=x.T
+    final_data = an_pls_regression(x_final,y,Model_path,sample_name,parameters)
 
-    file_path = "Models/"+parent+"/"+child+"/"
-    if not os.path.exists(file_path +"scatter_correction/"):
-        os.makedirs(file_path +"scatter_correction/")
-    if not os.path.exists(file_path +"pretreatment/"):
-        os.makedirs(file_path + "pretreatment/")
-
-
-    if scatterCorrection == 'SNV':
-        dump(SNV, open(file_path +'scatter_correction/'+sample_name+'_SNV.pkl', 'wb'))
-        x_scatter=SNV.fit_transform(x1)
-    elif scatterCorrection == 'MSC':
-        dump(MSC, open(file_path+'scatter_correction/'+sample_name+'_MSC.pkl', 'wb'))
-
-        x_scatter=MSC.fit_transform(x1)
+    file_name = Model_path+'/graphs/'+sample_name + "_plsmodel.json"
+    json_object = json.dumps(final_data, indent = 4)
 
 
-    Xpt = signal.savgol_filter(x_scatter, window, polynomial, deriv=derivative,axis=0)
-    sav_gol_param = [window,polynomial,derivative]
 
-    dump(sav_gol_param,open(file_path+'pretreatment/'+sample_name+'_SG.pkl', 'wb'))
-    x_final=Xpt.T
+    with open(file_name,'w') as f:
+        f.write(json_object)
 
-    return 0
+    return final_data
