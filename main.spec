@@ -4,11 +4,11 @@
 block_cipher = None
 
 
-a = Analysis(['C:/Users/anisha/Desktop/NIRO-windows_ver/app/main.py'],
+a = Analysis(['C:/Users/Elico/Desktop/NIRO-windows_ver/app/main.py'],
              pathex=[],
-             binaries=[('C:/Users/anisha/Desktop/NIRO-windows_ver/app/Sensor/src/libdlpspec.dll', '.')],
-             datas=[('C:/Users/anisha/Desktop/NIRO-windows_ver/app/Data', 'Data/'), ('C:/Users/anisha/Desktop/NIRO-windows_ver/app/main.py', '.')],
-             hiddenimports=['uvicorn.lifespan.off', 'uvicorn.lifespan.on', 'uvicorn.lifespan', 'uvicorn.protocols.websockets.auto', 'uvicorn.protocols.websockets.wsproto_impl', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.http.h11_impl', 'uvicorn.protocols.http.httptools_impl', 'uvicorn.protocols.websockets', 'uvicorn.protocols.http', 'uvicorn.protocols', 'uvicorn.loops.auto', 'uvicorn.loops.asyncio', 'uvicorn.loops.uvloop', 'uvicorn.loops', 'uvicorn.logging'],
+             binaries=[('C:/Users/Elico/Desktop/NIRO-windows_ver/app/Sensor/src/libdlpspec.dll', '.')],
+             datas=[('C:/Users/Elico/Desktop/NIRO-windows_ver/app/Data', 'Data/'), ('C:/Users/Elico/Desktop/NIRO-windows_ver/app/main.py', '.')],
+             hiddenimports=['uvicorn.lifespan.off', 'uvicorn.lifespan.on', 'uvicorn.lifespan', 'uvicorn.protocols.websockets.auto', 'uvicorn.protocols.websockets.wsproto_impl', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.http.h11_impl', 'uvicorn.protocols.http.httptools_impl', 'uvicorn.protocols.websockets', 'uvicorn.protocols.http', 'uvicorn.protocols', 'uvicorn.loops.auto', 'uvicorn.loops.asyncio', 'uvicorn.loops.uvloop', 'uvicorn.loops', 'uvicorn.logging', 'sklearn.utils._typedefs'],
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],

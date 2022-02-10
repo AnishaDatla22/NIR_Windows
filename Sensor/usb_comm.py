@@ -37,7 +37,7 @@ def setup(VID,PID):
     set_date()
     get_sleep_mode()
     set_sleep_mode(0)     # Turn off hibernation
-
+    time.sleep(2)
 
 #Sends commands to device and waits for read data back from device
 def send_info(cmd_name,cmd,ret_len):
@@ -198,9 +198,11 @@ def set_date():
     send_info (CMD_SET_TDAT[0], cur_tdat, CMD_SET_TDAT[8]) # Set time and date
     time.sleep(0.05)
     send_info (CMD_GET_SNUM[0], CMD_GET_SNUM[1:8], CMD_GET_SNUM[8]) # Get serial number
+
 #Get Date and Time
 def get_date():
     send_info (CMD_GET_TDAT[0], CMD_GET_TDAT[1:8], CMD_GET_TDAT[8]) # Get time and date
+
 def get_sleep_mode():
      send_info (CMD_GET_HIBM[0], CMD_GET_HIBM[1:8], CMD_GET_HIBM[8]) # Get sleep mode flag
 
@@ -260,8 +262,8 @@ def start_scan(store_in_sd):
         time.sleep(0.5) #check after 500msec
     device_busy = 1
 
-    send_info (CMD_GET_GAIN[0], CMD_GET_GAIN[1:8], CMD_GET_GAIN[8])
-
+    #send_info (CMD_GET_GAIN[0], CMD_GET_GAIN[1:8], CMD_GET_GAIN[8])
+    
 
 #read scan data
 def read_data(type):

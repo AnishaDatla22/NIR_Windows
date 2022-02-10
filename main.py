@@ -130,7 +130,8 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =2,p
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
 def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,ploynomial: int,derivative: int, inputf: JSONStructure = None):
-    parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    #parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    parameters = ['% Moisture Content','% Fat Content']
     final_data = AN_pls_algo(parentName,childName,sample,scatterCorrection, \
     window,ploynomial,derivative,inputf,parameters)
 
@@ -153,19 +154,22 @@ def read_file(file):
 @app.post("/uploadFilePred",tags=['Prediction Upload Controller'])
 def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
 
+    #parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    parameters = ['% Moisture Content','% Fat Content']
     df = read_file(file)
     df = FD_format_data(df)                                                          # Clean data
 
-    final_pred=AN_upload_predict(child,parent,child,model,df)
+    final_pred=AN_upload_predict(child,parent,child,model,df,parameters)
     return {'prediction':final_pred}
 
 
 @app.post("/uploadFile",tags=['File Upload Controller'])
 def upload_file(file: UploadFile = File(...)):
-    parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    #parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    parameters = ['% Moisture Content','% Fat Content']
     df = read_file(file)
 
-    if '% Moisture Content' in df.columns:
+    try:
 
         df = FD_format_data(df)
 
@@ -178,9 +182,12 @@ def upload_file(file: UploadFile = File(...)):
         final_graph=df1.to_json(orient='records')
 
         df.reset_index(inplace = True)
-        final_table=df.to_json(orient='records')                                # Convert to json
+        final_table=df.to_json(orient='records')
 
-        return {'table':final_table,'graph':final_graph,'parameters':final_param}
+    except:
+        print("Error Uploading File")                             # Convert to json
+
+    return {'table':final_table,'graph':final_graph,'parameters':final_param}
 
 
 #**********************************************************************************************

@@ -24,10 +24,10 @@ def an_predict_flow(df,parent,child,saved_model):
     file_path = 'Models/'+parent+'/'+child
     file_name_sc = file_path + '/scatter_correction/'+saved_model.rsplit('_', 1)[0]
     try:
-        with open(file_name_sc+'_SNV.pkl', 'rb') as file:
+        with open(file_name_sc+'_T_SNV.pkl', 'rb') as file:
             SC=pickle.load(file)
     except:
-        with open(file_name_sc+'_MSC.pkl', 'rb') as file:
+        with open(file_name_sc+'_T_MSC.pkl', 'rb') as file:
             SC=pickle.load(file)                   # SNV or MSC
     Xscatter=SC.fit_transform(df)
     print(Xscatter)
@@ -47,11 +47,15 @@ def an_predict_flow(df,parent,child,saved_model):
     return yhat
 
 
-def AN_upload_predict(name,parent,child,saved_model,input_data):
+def AN_upload_predict(name,parent,child,saved_model,input_data,parameters):
 
        samples=input_data.index.values.tolist()
 
        yhat = an_predict_flow(input_data,parent,child,saved_model)
+
+       param_predict = []
+       for param in parameters:
+           param_predict.append(param + "_predict")
 
 
        pred=list(yhat)
@@ -59,7 +63,7 @@ def AN_upload_predict(name,parent,child,saved_model,input_data):
        df_pred['samples']=samples
 
        df_pred['prediction']=pred
-       df_pred[['moisture_predict','fat_predict','protein_predict']] = pd.DataFrame(df_pred.prediction.tolist(), index= df_pred.index)
+       df_pred[param_predict] = pd.DataFrame(df_pred.prediction.tolist(), index= df_pred.index)
        df_pred=df_pred.round(2)
        df_pred=df_pred.drop('prediction',axis=1)
 

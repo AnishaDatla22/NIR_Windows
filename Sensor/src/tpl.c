@@ -47,18 +47,17 @@ static const char id[]="$Id: tpl.c 192 2009-04-24 10:35:30Z thanson $";
 #endif
 
 #include <errno.h>
-//#ifndef _WIN32
+#ifndef _WIN32
 #include <inttypes.h>   /* uint32_t, uint64_t, etc */
-
-//#else
-//typedef unsigned short ushort;
-//typedef __int16 int16_t;
-//typedef __int32 int32_t;
-//typedef __int64 int64_t;
-//typedef unsigned __int16 uint16_t;
-//typedef unsigned __int32 uint32_t;
-//typedef unsigned __int64 uint64_t;
-//#endif
+#else
+typedef unsigned short ushort;
+typedef __int16 int16_t;
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+#endif
 
 #ifndef S_ISREG
 #define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
@@ -69,7 +68,7 @@ static const char id[]="$Id: tpl.c 192 2009-04-24 10:35:30Z thanson $";
 #if ( defined __CYGWIN__ || defined __MINGW32__ || defined _WIN32 )
 #include "win/mman.h"   /* mmap */
 #else
-//#include <sys/mman.h>   /* mmap */
+#include <sys/mman.h>   /* mmap */
 #endif
 
 #include "tpl.h"

@@ -22,6 +22,7 @@ def ns_StartScan(res):
 
     results = get_results() # get scan results
     ref_scan = get_ref_data() # get reference values
+    time.sleep(0.3) # wait 300msec until motor is moved to next position
     return results,ref_scan
 
 #**********************************************************************************************

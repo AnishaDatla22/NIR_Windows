@@ -1,0 +1,4 @@
+2022-01-18 15:50:52.080 | INFO     | logging:callHandlers:1696 - Started server process [15656]
+2022-01-18 15:50:52.080 | INFO     | logging:callHandlers:1696 - Waiting for application startup.
+2022-01-18 15:50:52.080 | INFO     | logging:callHandlers:1696 - Application startup complete.
+2022-01-18 15:50:52.080 | INFO     | logging:callHandlers:1696 - Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

@@ -130,12 +130,11 @@ def savitzky_golay(parentName:str, childName:str, sample:str,derivative:int =2,p
 
 @app.post('/plsAlgoritm',tags=['Ml Algorithms'])
 def PLS_Algorithm(parentName:str,childName:str,sample: str,scatterCorrection: str,window: int,ploynomial: int,derivative: int, inputf: JSONStructure = None):
+    parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
+    final_data = AN_pls_algo(parentName,childName,sample,scatterCorrection, \
+    window,ploynomial,derivative,inputf,parameters)
 
-   parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
-   final_data = pls_func(parentName,childName,sample,scatterCorrection, \
-   window,ploynomial,derivative,inputf,parameters)
-
-   return final_data
+    return final_data
 
 #**********************************************************************************************
 #-------------------------------File Upload Functions-----------------------------------------
@@ -235,9 +234,6 @@ def custom_config(parent: str, child: str,name: str,start: float,end: float, rep
 
 @app.get("/scanCustomOverlayMultiSpectralData",tags=['Sensor Controller'])
 def custom_config(fileName: str, parent: str, child: str,name: str,start: float,end: float, repeat: float, res: float, pattern: float):
-    #nmwidth={"2.34":447,"3.51":410,"4.68":378,"5.85":351,"7.03":351,"8.20":328,"9.37":307,"10.54":289}
-    #key = "{:.2f}".format(res)
-    #set_scan_config(name,start,end,repeat,res,nmwidth[key])
     res=NS_scansample(fileName,name,parent,child,res,2)
     return res
 
@@ -250,12 +246,13 @@ def custom_config(stime:str,number: str ,fileName: str, parent: str, child: str,
 @app.get("/sensorTest",tags=['Sensor Controller'])
 def sensor_activate_test():
     global sensorOpen
-    logger.info("SensorConnected")
+
     if sensorOpen == 0:
         setup(VID,PID)
         time.sleep(1)
         get_date()
         sensorOpen = 1
+        logger.info("SensorConnected")
     return {"test":'ok'}
 
 #**********************************************************************************************
