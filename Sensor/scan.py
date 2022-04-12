@@ -14,8 +14,9 @@ from loguru import logger
 SCAN_ID = 10
 SCAN_TYPE = 0 # column scan
 
-#dlp_nano_lib = ctypes.CDLL("libdlpspec.dll")
-dlp_nano_lib = ctypes.CDLL("Sensor/src/libdlpspec.dll")
+#dlp_nano_lib = ctypes.WinDLL("libdlpspec.dll")
+dlp_nano_lib = ctypes.WinDLL("Dependencies/x64/libdlpspec.dll")
+#dlp_nano_lib = ctypes.WinDLL("Sensor/Dependencies/x86/libdlpspec.dll")
 
 class scanConfigHead(ctypes.Structure):
     _fields_ = [

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3.7
 
 
-from Sensor.scan import *
-from Sensor.commands import *
+#from Sensor.scan import *
+#from Sensor.commands import *
+from commands import *
+from scan import *
 import datetime
 import math
 import time
@@ -263,7 +265,7 @@ def start_scan(store_in_sd):
     device_busy = 1
 
     #send_info (CMD_GET_GAIN[0], CMD_GET_GAIN[1:8], CMD_GET_GAIN[8])
-    
+
 
 #read scan data
 def read_data(type):

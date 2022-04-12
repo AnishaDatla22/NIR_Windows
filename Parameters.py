@@ -21,8 +21,8 @@ def PM_categories():
 
     cat = {"Poultry": ["Chick","Broiler","Breeder","Layer","Others"],
             "Agri":["Grains", "Oils", "Fruits","Vegetables","Others"],
-            "Dairy":["Milk", "Cheese/Butter", "Whey","Cassein","Others"],
+            "Dairy":["Milk", "Cheese", "Whey","Cassein","Others"],
             "Pharma":["Granulation","Blending","Drying","Compression","Process Monitoring","Real-time Process Understanding","Predictive Analytics"]
           }
     categories = json.dumps(cat,indent=4)
-    return categories          
+    return categories

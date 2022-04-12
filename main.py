@@ -155,7 +155,7 @@ def read_file(file):
 def upload_file(parent:str, child:str,model: str,file: UploadFile = File(...)):
 
     #parameters = ['% Moisture Content','% Fat Content', '% Protein Content']
-    parameters = ['% Moisture Content','% Fat Content']
+    parameters = ['Moisture Content','Fat Content']
     df = read_file(file)
     df = FD_format_data(df)                                                          # Clean data
 
